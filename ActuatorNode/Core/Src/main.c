@@ -126,10 +126,10 @@ int main(void)
   /* USER CODE BEGIN 2 */
     HAL_TIM_Base_Start_IT(&htim3);
   //  Monitor_Show();
-    /* USER CODE END 2 */
+  /* USER CODE END 2 */
 
-    /* Infinite loop */
-    /* USER CODE BEGIN WHILE */
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
     while (1)
     {
   	  /* blink LED effect current mode */
@@ -137,11 +137,11 @@ int main(void)
 
   	  Buttons_Check();
 
-      /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-      /* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
     }
-    /* USER CODE END 3 */
+  /* USER CODE END 3 */
 }
 
 /**
@@ -451,8 +451,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOA, SPI_SS_Pin|L_PWM_Pin|R_PWM_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, R_EN_Pin|L_EN_Pin|LEDR_Pin|LEDG_Pin
-                          |LEDB_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, R_EN_Pin|L_EN_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, LEDR_Pin|LEDG_Pin|LEDB_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pins : SPI_SS_Pin L_PWM_Pin R_PWM_Pin */
   GPIO_InitStruct.Pin = SPI_SS_Pin|L_PWM_Pin|R_PWM_Pin;
