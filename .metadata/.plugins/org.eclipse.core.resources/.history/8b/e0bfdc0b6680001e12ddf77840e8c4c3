@@ -108,12 +108,8 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-
   // TODO: edit INA219UserConfig
-  //
-  //
   INA219Init(INA219UserConfig);
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
