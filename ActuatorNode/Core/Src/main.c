@@ -145,13 +145,7 @@ int main(void)
 //  	  Buttons_Check();
     	for (int i = 0; i < 10; ++ i)
     	{
-//    		if (datacheck)
-//    		{
-    			HAL_UART_Transmit(&huart1, CANRxBuffer, 8, 1000);
-    			HAL_UART_Transmit(&huart1, (uint8_t*)"abcdefgh", 8, 1000);
-//    		}
-
-        		HAL_Delay(1000);
+    		printf("Hello");
     		CANDataRcvFlag = 0;
     		CANTransmit(i);
     		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_10);
