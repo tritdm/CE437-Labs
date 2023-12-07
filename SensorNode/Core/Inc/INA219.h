@@ -60,7 +60,6 @@
 #define	INA219_CONFIG_MODE_BVOLT_CONTINUOUS		0x06 /**< bus voltage continuous */
 #define	INA219_CONFIG_MODE_SANDBVOLT_CONTINUOUS 0x07
 
-enum INA219Cfg {};
 
 typedef struct INA219_config
 {

@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "INA219.h"
+//#include "INA219.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -52,7 +52,7 @@ UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-INA219Config INA219UserConfig;
+//INA219Config INA219UserConfig;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -109,17 +109,13 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  // TODO: edit INA219UserConfig
-  //
-  //
-  INA219Init(INA219UserConfig);
-
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -412,7 +408,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(XSHUT_MCU1_0_GPIO_Port, XSHUT_MCU1_0_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LEDB_Pin|LEDG_Pin|LEDR_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, LEDB_Pin|LEDG_Pin|LEDR_Pin|GPIO_PIN_3, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, MPU_BOOT_Pin|MPU_RST_Pin|XSHUT_MCU1_1_Pin, GPIO_PIN_RESET);
@@ -440,9 +436,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LEDB_Pin LEDG_Pin LEDR_Pin MPU_BOOT_Pin
-                           MPU_RST_Pin XSHUT_MCU1_1_Pin */
+                           MPU_RST_Pin PB3 XSHUT_MCU1_1_Pin */
   GPIO_InitStruct.Pin = LEDB_Pin|LEDG_Pin|LEDR_Pin|MPU_BOOT_Pin
-                          |MPU_RST_Pin|XSHUT_MCU1_1_Pin;
+                          |MPU_RST_Pin|GPIO_PIN_3|XSHUT_MCU1_1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

@@ -18,10 +18,12 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "builtin.h"
+#include "gpio.h"
+#include "timer.h"
+#include "uart.h"
+#include "can.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,6 +42,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+CAN_HandleTypeDef hcan;
+
 I2C_HandleTypeDef hi2c2;
 
 SPI_HandleTypeDef hspi1;
@@ -51,7 +55,13 @@ TIM_HandleTypeDef htim4;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-
+/* CAN Tx variables */
+CAN_TxHeaderTypeDef CANTxHeader;
+uint8_t CANTxBuffer[] = "Example0";
+uint32_t CANTxMailboxes = CAN_TX_MAILBOX1;
+/* CAN Rx variables */
+extern uint8_t CANRxBuffer[];
+extern uint8_t CANDataRcvFlag;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -63,30 +73,24 @@ static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_USART1_UART_Init(void);
+static void MX_CAN_Init(void);
 /* USER CODE BEGIN PFP */
+void CANTransmit(int x)
+{
+	CANTxHeader.StdId 	= CAN_TX_STD_ID;
+	CANTxHeader.IDE 	= CAN_ID_STD;
+	CANTxHeader.RTR 	= CAN_RTR_DATA;
+	CANTxHeader.DLC 	= CAN_DATA_LENGTH;
+	CANTxBuffer[7] 		= '0' + x;
+
+	CAN_Transmit(&hcan, &CANTxHeader, CANTxBuffer, &CANTxMailboxes);
+}
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-/**
- * @brief: ISR Timer 3
- *
- * @operation: interrupt every 100ms
- */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-	if (htim->Instance == htim3.Instance)
-	{
-		//HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-		timeElapsed += 100;
-		if (isButtonPressed) pressTime += 100;
-	}
-	else
-	{
-		__NOP();
-	}
-}
+
 /* USER CODE END 0 */
 
 /**
@@ -123,8 +127,11 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM4_Init();
   MX_USART1_UART_Init();
+  MX_CAN_Init();
   /* USER CODE BEGIN 2 */
-    HAL_TIM_Base_Start_IT(&htim3);
+  HAL_TIM_Base_Start_IT(&htim3);
+  HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
+  HAL_CAN_Start(&hcan);
   //  Monitor_Show();
   /* USER CODE END 2 */
 
@@ -133,10 +140,24 @@ int main(void)
     while (1)
     {
   	  /* blink LED effect current mode */
-  	  LED_Blink_Mode[LED_Blink_Current_Mode]();
+//  	  LED_Blink_Mode[LED_Blink_Current_Mode]();
+//
+//  	  Buttons_Check();
+    	for (int i = 0; i < 10; ++ i)
+    	{
+//    		if (datacheck)
+//    		{
+    			HAL_UART_Transmit(&huart1, CANRxBuffer, 8, 1000);
+    			HAL_UART_Transmit(&huart1, (uint8_t*)"abcdefgh", 8, 1000);
+//    		}
 
-  	  Buttons_Check();
+        		HAL_Delay(1000);
+    		CANDataRcvFlag = 0;
+    		CANTransmit(i);
+    		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_10);
 
+    		HAL_Delay(10000);
+    	}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -181,6 +202,56 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief CAN Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_CAN_Init(void)
+{
+
+  /* USER CODE BEGIN CAN_Init 0 */
+
+  /* USER CODE END CAN_Init 0 */
+
+  /* USER CODE BEGIN CAN_Init 1 */
+
+  /* USER CODE END CAN_Init 1 */
+  hcan.Instance = CAN1;
+  hcan.Init.Prescaler = 4;
+  hcan.Init.Mode = CAN_MODE_LOOPBACK;
+  hcan.Init.SyncJumpWidth = CAN_SJW_2TQ;
+  hcan.Init.TimeSeg1 = CAN_BS1_13TQ;
+  hcan.Init.TimeSeg2 = CAN_BS2_4TQ;
+  hcan.Init.TimeTriggeredMode = DISABLE;
+  hcan.Init.AutoBusOff = DISABLE;
+  hcan.Init.AutoWakeUp = DISABLE;
+  hcan.Init.AutoRetransmission = DISABLE;
+  hcan.Init.ReceiveFifoLocked = DISABLE;
+  hcan.Init.TransmitFifoPriority = DISABLE;
+  if (HAL_CAN_Init(&hcan) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN CAN_Init 2 */
+//  CAN_FilterTypeDef canfilterconfig;
+//
+//  canfilterconfig.FilterActivation = CAN_FILTER_ENABLE;
+//  canfilterconfig.FilterBank = 18;  // which filter bank to use from the assigned ones
+//  canfilterconfig.FilterFIFOAssignment = CAN_FILTER_FIFO0;
+//  canfilterconfig.FilterIdHigh = 0x446<<5;
+//  canfilterconfig.FilterIdLow = 0;
+//  canfilterconfig.FilterMaskIdHigh = 0x446<<5;
+//  canfilterconfig.FilterMaskIdLow = 0x0000;
+//  canfilterconfig.FilterMode = CAN_FILTERMODE_IDMASK;
+//  canfilterconfig.FilterScale = CAN_FILTERSCALE_32BIT;
+//  canfilterconfig.SlaveStartFilterBank = 20;  // how many filters to assign to the CAN1 (master can)
+//
+//  HAL_CAN_ConfigFilter(&hcan1, &canfilterconfig);
+  /* USER CODE END CAN_Init 2 */
+
 }
 
 /**

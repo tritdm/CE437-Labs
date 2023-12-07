@@ -1,25 +1,23 @@
-#include "builtin.h"
-#include "main.h"
+#include "gpio.h"
 
 const int pressTimeThreshold = 500;
 const int Button_Pin[NUM_BUTTON] = {BTN1_Pin, BTN2_Pin};
 int LED_Blink_Period[] = {500, 500, 500};				/* blink period in different modes */
 int LED_Blink_Current_Mode = 0;							/* current mode */
 int LED_Blink_Current_Period = 500;						/* current blink period */
-volatile int difTime = 0;
-volatile int timeElapsed = 0;							/* time elapsed */
-volatile int pressTime = 0;								/* button push time elapsed */
-int isButtonPressed	= 0;
-uint8_t data[10];
+volatile uint32_t difTime = 0;
+extern uint32_t timeElapsed;
+volatile uint32_t pressTime = 0;								/* button push time elapsed */
+uint8_t isButtonPressed	= 0;
 
 /**
  * @brief: LED blink effect pointer function
  */
 LED_Blink LED_Blink_Mode[NUM_MODE] =
 {
-	LED_Blink_Mode_0,
 	LED_Blink_Mode_1,
-	LED_Blink_Mode_2
+	LED_Blink_Mode_2,
+	LED_Blink_Mode_3
 };
 /**
  * @brief: Button short press pointer function
@@ -48,14 +46,14 @@ Long_Press Long_Press_Button[NUM_BUTTON] =
 	LED_Blink_Current_Mode = p_mode;
 	LED_Blink_Current_Period = LED_Blink_Period[LED_Blink_Current_Mode];
 }
-void convert(int duration, uint8_t* data)
+void convert(uint32_t num, uint8_t* str)
 {
-	int i = 0;
-	while (duration > 0)
+	uint8_t _idx = 0;
+	while (num > 0)
 	{
-		data[i] = duration % 10 + 48;
-		duration /= 10;
-		++ i;
+		str[_idx] = num % 10 + 48;
+		num /= 10;
+		++ _idx;
 	}
 }
 /**
@@ -64,7 +62,7 @@ void convert(int duration, uint8_t* data)
  * @param None
  * @retval None
  */
-void LED_Blink_Mode_0(void)
+void LED_Blink_Mode_1(void)
 {
 	if (timeElapsed >= LED_Blink_Current_Period)
 	{
@@ -91,7 +89,7 @@ void LED_Blink_Mode_0(void)
  * @param None
  * @retval None
  */
- void LED_Blink_Mode_1(void)
+ void LED_Blink_Mode_2(void)
 {
 	if (timeElapsed >= LED_Blink_Current_Period)
 	{
@@ -118,7 +116,7 @@ void LED_Blink_Mode_0(void)
  * @param None
  * @retval None
  */
- void LED_Blink_Mode_2(void)
+ void LED_Blink_Mode_3(void)
 {
 	if (timeElapsed >= LED_Blink_Current_Period)
 	{
