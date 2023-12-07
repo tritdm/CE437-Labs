@@ -3,6 +3,8 @@
 
 #include "main.h"
 
+#define ACTUATOR_GPIO_PORT 		GPIOB
+
 #define NUM_MODE 				3								/* number of mode */
 #define NUM_BUTTON				2								/* number of user button */
 #define DEBOUNCE_DELAY			50U								/* software debounce delay */

@@ -85,7 +85,6 @@ void CANTransmit(int x)
 
 	CAN_Transmit(&hcan, &CANTxHeader, CANTxBuffer, &CANTxMailboxes);
 }
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/

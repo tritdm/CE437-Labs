@@ -82,7 +82,7 @@ void Error_Handler(void);
 #define LEDB_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-#define ACTUATOR_GPIO_PORT GPIOB
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

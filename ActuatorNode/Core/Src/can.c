@@ -4,6 +4,36 @@ volatile uint8_t CANDataRcvFlag = 0;
 uint8_t CANRxBuffer[CAN_DATA_LENGTH];
 CAN_RxHeaderTypeDef CANRxHeader;
 
+int SAE_J1850_Calc(int data[], int len)
+{
+	int crc, temp1, temp2;
+	crc 	= 0;
+	temp1 	= 0;
+	temp2 	= 0;
+	for (int _idx = 0; _idx < len; ++ _idx)
+	{
+		if (0 == _idx)
+		{
+			temp1 = 0;
+		}
+		else
+		{
+			temp1 = data[len - _idx];
+		}
+		crc = crc ^ temp1;
+		for (int _idy = 8; _idy > 0; -- _idy)
+		{
+			temp2 = crc;
+			crc = crc << 1;
+			if (0 != (temp2 & 128))
+			{
+				crc = crc ^ 0x1d;
+			}
+		}
+	}
+	return crc;
+}
+
 void CAN_Transmit(CAN_HandleTypeDef *hcan, const CAN_TxHeaderTypeDef *pHeader,
         		const uint8_t aData[], uint32_t *pTxMailbox)
 {
