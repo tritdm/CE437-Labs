@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "gpio.h"
@@ -57,11 +58,12 @@ UART_HandleTypeDef huart1;
 /* USER CODE BEGIN PV */
 /* CAN Tx variables */
 CAN_TxHeaderTypeDef CANTxHeader;
-uint8_t CANTxBuffer[] = "Example0";
+uint8_t CANTxBuffer[] = {0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 uint32_t CANTxMailboxes = CAN_TX_MAILBOX1;
 /* CAN Rx variables */
 extern uint8_t CANRxBuffer[];
 extern uint8_t CANDataRcvFlag;
+extern CAN_RxHeaderTypeDef CANRxHeader;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -75,21 +77,32 @@ static void MX_TIM4_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_CAN_Init(void);
 /* USER CODE BEGIN PFP */
-void CANTransmit(int x)
-{
-	CANTxHeader.StdId 	= CAN_TX_STD_ID;
-	CANTxHeader.IDE 	= CAN_ID_STD;
-	CANTxHeader.RTR 	= CAN_RTR_DATA;
-	CANTxHeader.DLC 	= CAN_DATA_LENGTH;
-	CANTxBuffer[7] 		= '0' + x;
 
-	CAN_Transmit(&hcan, &CANTxHeader, CANTxBuffer, &CANTxMailboxes);
-}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void CANResponse()
+{
+	for (int _byte = 0; _byte < 8; ++ _byte)
+	{
+		CANTxBuffer[_byte] = CANRxBuffer[_byte];
+	}
 
+	CANTxBuffer[2] = CANTxBuffer[0] + CANTxBuffer[1];
+
+//	CANTxBuffer[7] = SAE_J1850_Calc(CANTxBuffer, 7);
+
+	CANTxHeader.StdId 	= CAN_TX_STD_ID;
+	CANTxHeader.IDE 	= CAN_ID_STD;
+	CANTxHeader.RTR 	= CAN_RTR_DATA;
+	CANTxHeader.DLC 	= CAN_DATA_LENGTH;
+
+	if (HAL_CAN_AddTxMessage(&hcan, &CANTxHeader, CANTxBuffer, &CANTxMailboxes) == HAL_OK)
+	{
+
+	}
+}
 /* USER CODE END 0 */
 
 /**
@@ -129,8 +142,12 @@ int main(void)
   MX_CAN_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
+  if (HAL_CAN_Start(&hcan) != HAL_OK)
+  {
+	  Error_Handler();
+  }
   HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
-  HAL_CAN_Start(&hcan);
+  printf("Actuator\n");
   //  Monitor_Show();
   /* USER CODE END 2 */
 
@@ -138,19 +155,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
     while (1)
     {
-  	  /* blink LED effect current mode */
-//  	  LED_Blink_Mode[LED_Blink_Current_Mode]();
-//
-//  	  Buttons_Check();
-    	for (int i = 0; i < 10; ++ i)
+    	if (CANDataRcvFlag == 1)
     	{
-    		printf("Hello");
     		CANDataRcvFlag = 0;
-    		CANTransmit(i);
-    		HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_10);
-
-    		HAL_Delay(10000);
+    		CANResponse();
     	}
+//    	CANTransmit();
+//    	HAL_Delay(50);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -214,7 +225,7 @@ static void MX_CAN_Init(void)
   /* USER CODE END CAN_Init 1 */
   hcan.Instance = CAN1;
   hcan.Init.Prescaler = 4;
-  hcan.Init.Mode = CAN_MODE_LOOPBACK;
+  hcan.Init.Mode = CAN_MODE_NORMAL;
   hcan.Init.SyncJumpWidth = CAN_SJW_2TQ;
   hcan.Init.TimeSeg1 = CAN_BS1_13TQ;
   hcan.Init.TimeSeg2 = CAN_BS2_4TQ;
@@ -229,20 +240,20 @@ static void MX_CAN_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN CAN_Init 2 */
-//  CAN_FilterTypeDef canfilterconfig;
-//
-//  canfilterconfig.FilterActivation = CAN_FILTER_ENABLE;
-//  canfilterconfig.FilterBank = 18;  // which filter bank to use from the assigned ones
-//  canfilterconfig.FilterFIFOAssignment = CAN_FILTER_FIFO0;
-//  canfilterconfig.FilterIdHigh = 0x446<<5;
-//  canfilterconfig.FilterIdLow = 0;
-//  canfilterconfig.FilterMaskIdHigh = 0x446<<5;
-//  canfilterconfig.FilterMaskIdLow = 0x0000;
-//  canfilterconfig.FilterMode = CAN_FILTERMODE_IDMASK;
-//  canfilterconfig.FilterScale = CAN_FILTERSCALE_32BIT;
-//  canfilterconfig.SlaveStartFilterBank = 20;  // how many filters to assign to the CAN1 (master can)
-//
-//  HAL_CAN_ConfigFilter(&hcan1, &canfilterconfig);
+  CAN_FilterTypeDef canfilterconfig;
+
+  canfilterconfig.FilterActivation = CAN_FILTER_ENABLE;
+  canfilterconfig.FilterBank = 12;  // which filter bank to use from the assigned ones
+  canfilterconfig.FilterFIFOAssignment = CAN_FILTER_FIFO1;
+  canfilterconfig.FilterIdHigh = 0x0a2<<5;
+  canfilterconfig.FilterIdLow = 0;
+  canfilterconfig.FilterMaskIdHigh = 0x0a2<<5;
+  canfilterconfig.FilterMaskIdLow = 0x0000;
+  canfilterconfig.FilterMode = CAN_FILTERMODE_IDMASK;
+  canfilterconfig.FilterScale = CAN_FILTERSCALE_32BIT;
+  canfilterconfig.SlaveStartFilterBank = 13;  // how many filters to assign to the CAN1 (master can)
+
+  HAL_CAN_ConfigFilter(&hcan, &canfilterconfig);
   /* USER CODE END CAN_Init 2 */
 
 }
@@ -512,7 +523,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, SPI_SS_Pin|L_PWM_Pin|R_PWM_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, SPI_SS_Pin|L_PWM_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, R_EN_Pin|L_EN_Pin, GPIO_PIN_RESET);
@@ -520,8 +531,8 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LEDR_Pin|LEDG_Pin|LEDB_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pins : SPI_SS_Pin L_PWM_Pin R_PWM_Pin */
-  GPIO_InitStruct.Pin = SPI_SS_Pin|L_PWM_Pin|R_PWM_Pin;
+  /*Configure GPIO pins : SPI_SS_Pin L_PWM_Pin */
+  GPIO_InitStruct.Pin = SPI_SS_Pin|L_PWM_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

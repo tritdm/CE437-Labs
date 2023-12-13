@@ -57,8 +57,8 @@ void convert(uint32_t num, uint8_t* str)
 	}
 }
 /**
- * @brief LED blink effect mode 0
- * @operation LED blink effect mode 0
+ * @brief LED blink effect mode 1
+ * @operation LED blink effect mode 1
  * @param None
  * @retval None
  */
@@ -84,8 +84,8 @@ void LED_Blink_Mode_1(void)
 }
 
 /**
- * @brief LED blink effect mode 1
- * @operation Blink green LED with duration mode 1
+ * @brief LED blink effect mode 2
+ * @operation Blink green LED with duration mode 2
  * @param None
  * @retval None
  */
@@ -111,8 +111,8 @@ void LED_Blink_Mode_1(void)
 }
 
 /**
- * @brief LED blink effect mode 2
- * @operation Blink blue LED with duration mode 2
+ * @brief LED blink effect mode 3
+ * @operation Blink blue LED with duration mode 3
  * @param None
  * @retval None
  */
@@ -239,6 +239,6 @@ int checkButtonInMode()
  */
 void Monitor_Show()
 {
-//	printf("\nPeriod: %d\n", LED_Blink_Current_Period);
-//	printf("\nMode: %d\n", LED_Blink_Current_Mode);
+	printf("\nPeriod: %d\n", LED_Blink_Current_Period);
+	printf("\nMode: %d\n", LED_Blink_Current_Mode);
 }

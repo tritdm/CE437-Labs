@@ -40,21 +40,27 @@ void CAN_Transmit(CAN_HandleTypeDef *hcan, const CAN_TxHeaderTypeDef *pHeader,
 	HAL_CAN_AddTxMessage(hcan, pHeader, aData, pTxMailbox);
 }
 
-void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
-{
-	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &CANRxHeader, CANRxBuffer) != HAL_OK)
-	{
-		Error_Handler();
-	}
-
-	if (CANRxHeader.StdId == CAN_RX_STD_ID)
-	{
-		CANDataRcvFlag = 1;
-	}
-}
-
+//void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
+//{
+//	HAL_GPIO_TogglePin(GPIO_Port, LEDR_Pin);
+//	HAL_GPIO_TogglePin(GPIO_Port, LEDG_Pin);
+//	HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
+//
+//	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &CANRxHeader, CANRxBuffer) != HAL_OK)
+//	{
+//		Error_Handler();
+//	}
+//
+//	if (CANRxHeader.StdId == CAN_RX_STD_ID)
+//	{
+//		CANDataRcvFlag = 1;
+//	}
+//}
+//
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
+	HAL_GPIO_TogglePin(GPIO_Port, LEDG_Pin);
+
 	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &CANRxHeader, CANRxBuffer) != HAL_OK)
 	{
 		Error_Handler();

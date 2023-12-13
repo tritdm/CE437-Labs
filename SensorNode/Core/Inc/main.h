@@ -87,7 +87,7 @@ void Error_Handler(void);
 #define GPIO1_MCU1_1_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-
+#define GPIO_Port GPIOB
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
