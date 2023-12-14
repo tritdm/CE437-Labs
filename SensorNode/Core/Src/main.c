@@ -17,12 +17,13 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "uart.h"
-#include "can.h"
+#include "can_diagnostic_tester.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,7 +60,7 @@ uint8_t CANTxBuffer[] = {0x01, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 uint32_t CANTxMailboxes = CAN_TX_MAILBOX0;
 /* CAN Rx variables */
 extern uint8_t CANRxBuffer[];
-extern uint8_t CANDataRcvFlag;
+extern uint8_t CANDiagnosticResponseRcvFlag;
 extern CAN_RxHeaderTypeDef CANRxHeader;
 /* USER CODE END PV */
 
@@ -77,20 +78,20 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void CANTransmit()
-{
-	CANTxHeader.StdId 	= CAN_TX_STD_ID;
-	CANTxHeader.IDE 	= CAN_ID_STD;
-	CANTxHeader.RTR 	= CAN_RTR_DATA;
-	CANTxHeader.DLC 	= CAN_DATA_LENGTH;
-
-	CANTxBuffer[7] 		= (CANTxBuffer[7] + 1)%255;
-
-	if (HAL_CAN_AddTxMessage(&hcan, &CANTxHeader, CANTxBuffer, &CANTxMailboxes) == HAL_OK)
-	{
-		HAL_GPIO_TogglePin(GPIO_Port, LEDR_Pin);
-	}
-}
+//void CANTransmit()
+//{
+//	CANTxHeader.StdId 	= CAN_TX_STD_ID;
+//	CANTxHeader.IDE 	= CAN_ID_STD;
+//	CANTxHeader.RTR 	= CAN_RTR_DATA;
+//	CANTxHeader.DLC 	= CAN_DATA_LENGTH;
+//
+//	CANTxBuffer[7] 		= (CANTxBuffer[7] + 1)%255;
+//
+//	if (HAL_CAN_AddTxMessage(&hcan, &CANTxHeader, CANTxBuffer, &CANTxMailboxes) == HAL_OK)
+//	{
+//		HAL_GPIO_TogglePin(GPIO_Port, LEDR_Pin);
+//	}
+//}
 /* USER CODE END 0 */
 
 /**
@@ -139,20 +140,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	CANTransmit();
+//	readDataByIdenfierRequest(&hcan);
+	  writeShortDataByIdentifierRequest(&hcan);
 	HAL_Delay(50);
-	if (CANDataRcvFlag == 1)
+	if (CANDiagnosticResponseRcvFlag == 1)
 	{
-		CANDataRcvFlag = 0;
-		if ((CANRxBuffer[0] == CANTxBuffer[0]) && (CANRxBuffer[1] == CANTxBuffer[1]))
-		{
-			if (CANRxBuffer[2] == CANRxBuffer[0] + CANRxBuffer[1])
-			{
-				HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
-				if (CANRxBuffer[7]);
-			}
-		}
-
+		CANDiagnosticResponseRcvFlag = 0;
+//		readDataByIdenfierResponseCheck(CANRxBuffer);
+		writeDataByIdenfierResponseCheck(CANRxBuffer);
 	}
     /* USER CODE END WHILE */
 
@@ -291,9 +286,9 @@ static void MX_CAN_Init(void)
   canfilterconfig.FilterActivation = CAN_FILTER_ENABLE;
   canfilterconfig.FilterBank = 12;  // which filter bank to use from the assigned ones
   canfilterconfig.FilterFIFOAssignment = CAN_FILTER_FIFO1;
-  canfilterconfig.FilterIdHigh = 0x012<<5;
+  canfilterconfig.FilterIdHigh = CAN_DIAGNOSTIC_RESPONSE_ID<<5;
   canfilterconfig.FilterIdLow = 0;
-  canfilterconfig.FilterMaskIdHigh = 0x012<<5;
+  canfilterconfig.FilterMaskIdHigh = CAN_DIAGNOSTIC_RESPONSE_ID<<5;
   canfilterconfig.FilterMaskIdLow = 0x0000;
   canfilterconfig.FilterMode = CAN_FILTERMODE_IDMASK;
   canfilterconfig.FilterScale = CAN_FILTERSCALE_32BIT;
