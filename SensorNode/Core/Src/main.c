@@ -23,6 +23,8 @@
 /* USER CODE BEGIN Includes */
 #include "uart.h"
 #include "can.h"
+#include "VL53L0X.h"
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -132,6 +134,23 @@ int main(void)
 	  Error_Handler();
   }
   HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
+
+  //init 2 VL53L0X sensors
+//  if(!initDuelSensors(&hi2c1, ADDRESS_Sensor0, ADDRESS_Sensor1))
+//  {
+//	  Error_Handler();
+//  }
+
+	statInfo_t_VL53L0X distanceStr;
+	initVL53L0X(1, &hi2c1);
+
+	// Configure the sensor for high accuracy and speed in 20 cm.
+	setSignalRateLimit(200);
+	setVcselPulsePeriod(VcselPeriodPreRange, 10);
+	setVcselPulsePeriod(VcselPeriodFinalRange, 14);
+	setMeasurementTimingBudget(300 * 1000UL);
+
+	uint16_t distance;
   printf("Sensor\n");
   /* USER CODE END 2 */
 
@@ -157,6 +176,11 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	distance = readRangeSingleMillimeters(&distanceStr);
+
+	//sprintf(msgBuffer, "Distance: %d\r\n", distance);
+
+	printf("Distance: %d\r\n", distance);
   }
   /* USER CODE END 3 */
 }
@@ -493,6 +517,8 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+	  HAL_GPIO_TogglePin(LEDG_GPIO_Port, LEDG_Pin);
+	  HAL_Delay(200);
   }
   /* USER CODE END Error_Handler_Debug */
 }
