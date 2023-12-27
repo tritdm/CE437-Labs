@@ -2,7 +2,7 @@
 #include "gpio.h"
 
 volatile uint8_t CANDataRcvFlag = 0;
-uint8_t CANRxBuffer[CAN_DATA_LENGTH];
+volatile uint8_t CANRxBuffer[CAN_DATA_LENGTH];
 CAN_RxHeaderTypeDef CANRxHeader;
 
 int SAE_J1850_Calc(int data[], int len)

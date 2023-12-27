@@ -156,11 +156,24 @@ int main(void)
   /* USER CODE BEGIN WHILE */
     while (1)
     {
-    	if (CANDiagnosticRequestRcvFlag == 1)
+    	while (CANDiagnosticRequestRcvFlag != 1);
     	{
     		CANDiagnosticRequestRcvFlag = 0;
-    		readDataByIdentifierResponse(&hcan, &CANRxHeader, CANRxBuffer);
-    		writeDataByIdentifierResponse(&hcan, &CANRxHeader, CANRxBuffer);
+//    		readDataByIdentifierResponse(&hcan, &CANRxHeader, CANRxBuffer);
+//    		writeDataByIdentifierResponse(&hcan, &CANRxHeader, CANRxBuffer);
+    		if (securityAccessSeedGenerate(&hcan, &CANRxHeader, CANRxBuffer))
+    		{
+    			while (CANDiagnosticRequestRcvFlag != 1);
+    			{
+    	    		CANDiagnosticRequestRcvFlag = 0;
+    				flowControlResponse(&hcan, &CANRxHeader, CANRxBuffer);
+        			while (CANDiagnosticRequestRcvFlag != 1);
+					{
+        				CANDiagnosticRequestRcvFlag = 0;
+    					securityAccessKeyResponse(&hcan);
+					}
+    			}
+    		}
     	}
 //    	CANTransmit();
 //    	HAL_Delay(50);

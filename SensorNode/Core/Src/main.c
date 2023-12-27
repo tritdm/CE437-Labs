@@ -140,14 +140,30 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	readDataByIdenfierRequest(&hcan);
+//	readDataByIdenfierRequest(&hcan);
 //	  writeShortDataByIdentifierRequest(&hcan);
-	HAL_Delay(50);
-	if (CANDiagnosticResponseRcvFlag == 1)
+	  securityAccessSeedRequest(&hcan);
+	while (CANDiagnosticResponseRcvFlag != 1);
 	{
 		CANDiagnosticResponseRcvFlag = 0;
-		readDataByIdenfierResponseCheck(CANRxBuffer);
+//		readDataByIdenfierResponseCheck(CANRxBuffer);
 //		writeDataByIdenfierResponseCheck(CANRxBuffer);
+		if (securityAccessSeedResponseCheck(CANRxBuffer))
+		{
+			securityAccessUnlockRequest(&hcan);
+			HAL_Delay(100);
+			while (CANDiagnosticResponseRcvFlag != 1);
+			{
+				CANDiagnosticResponseRcvFlag = 0;
+				if (flowControlCheck(CANRxBuffer))
+				{
+					HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
+					securityRemainKeySend(&hcan);
+					while (CANDiagnosticResponseRcvFlag != 1);
+					CANDiagnosticResponseRcvFlag = 0;
+				}
+			}
+		}
 	}
     /* USER CODE END WHILE */
 
