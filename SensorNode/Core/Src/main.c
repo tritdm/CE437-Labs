@@ -17,7 +17,6 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -140,14 +139,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	readDataByIdenfierRequest(&hcan);
-//	  writeShortDataByIdentifierRequest(&hcan);
-	HAL_Delay(50);
+//	readDataByIdenfierRequest(&hcan);
+	writeShortDataByIdentifierRequest(&hcan);
+	HAL_Delay(2000);
 	if (CANDiagnosticResponseRcvFlag == 1)
 	{
 		CANDiagnosticResponseRcvFlag = 0;
-		readDataByIdenfierResponseCheck(CANRxBuffer);
-//		writeDataByIdenfierResponseCheck(CANRxBuffer);
+//		readDataByIdenfierResponseCheck(CANRxBuffer);
+		writeDataByIdenfierResponseCheck(CANRxBuffer);
 	}
     /* USER CODE END WHILE */
 
@@ -417,7 +416,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(XSHUT_MCU1_0_GPIO_Port, XSHUT_MCU1_0_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13|XSHUT_MCU1_0_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LEDB_Pin|LEDG_Pin|LEDR_Pin|GPIO_PIN_3, GPIO_PIN_SET);
@@ -428,18 +427,18 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pins : PC13 XSHUT_MCU1_0_Pin */
+  GPIO_InitStruct.Pin = GPIO_PIN_13|XSHUT_MCU1_0_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
   /*Configure GPIO pin : GPIO1_MCU1_0_Pin */
   GPIO_InitStruct.Pin = GPIO1_MCU1_0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIO1_MCU1_0_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : XSHUT_MCU1_0_Pin */
-  GPIO_InitStruct.Pin = XSHUT_MCU1_0_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(XSHUT_MCU1_0_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : BTN2_Pin BTN1_Pin */
   GPIO_InitStruct.Pin = BTN2_Pin|BTN1_Pin;

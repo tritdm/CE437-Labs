@@ -8,19 +8,25 @@ uint8_t seed[4], key[16];
 
 void writeShortDataByIdentifierRequest(CAN_HandleTypeDef *hcan)
 {
-	uint8_t CANTxRequest[READ_WRITE_REQUEST_LENGTH];
+	uint8_t CANTxRequest[CAN_DATA_LENGTH];
 	CAN_TxHeaderTypeDef CANTxHeaderRequest;
 	uint32_t CANTxMailboxesRequest = CAN_TX_MAILBOX1;
 
 	CANTxHeaderRequest.StdId = CAN_DIAGNOSTIC_REQUEST_ID;
 	CANTxHeaderRequest.IDE 	= CAN_ID_STD;
 	CANTxHeaderRequest.RTR 	= CAN_RTR_DATA;
-	CANTxHeaderRequest.DLC 	= READ_WRITE_REQUEST_LENGTH;
+	CANTxHeaderRequest.DLC 	= CAN_DATA_LENGTH;
 
+	// Frame type and data length
 	CANTxRequest[0] 	= 0x03;
+
+	// Request SID
 	CANTxRequest[1] 	= 0x2e;
+
+	// Data identifier (request code)
 	CANTxRequest[2]		= 0x01;
 	CANTxRequest[3]		= 0x23;
+	// Unused
 	CANTxRequest[4]		= UNUSED_DATA;
 	CANTxRequest[5]		= UNUSED_DATA;
 	CANTxRequest[6]		= UNUSED_DATA;
@@ -33,27 +39,38 @@ void writeShortDataByIdentifierRequest(CAN_HandleTypeDef *hcan)
 
 void writeDataByIdenfierResponseCheck(uint8_t CANRxBuffer[])
 {
-	if (CANRxBuffer[0] == WRITE_DATA_BY_ID_RESPONSE_SID)
+	if (CANRxBuffer[1] == WRITE_DATA_BY_ID_RESPONSE_SID)
 	{
 		HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
+	}
+	else
+	{
+		// Negative response
+		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 	}
 }
 
 void readDataByIdenfierRequest(CAN_HandleTypeDef *hcan)
 {
-	uint8_t CANTxRequest[READ_WRITE_REQUEST_LENGTH];
+	uint8_t CANTxRequest[CAN_DATA_LENGTH];
 	CAN_TxHeaderTypeDef CANTxHeaderRequest;
 	uint32_t CANTxMailboxesRequest = CAN_TX_MAILBOX1;
 
 	CANTxHeaderRequest.StdId 	= CAN_DIAGNOSTIC_REQUEST_ID;
 	CANTxHeaderRequest.IDE 	= CAN_ID_STD;
 	CANTxHeaderRequest.RTR 	= CAN_RTR_DATA;
-	CANTxHeaderRequest.DLC 	= READ_WRITE_REQUEST_LENGTH;
+	CANTxHeaderRequest.DLC 	= CAN_DATA_LENGTH;
 
+	// Frame type and data length
 	CANTxRequest[0] 	= 0x03;
+
+	// Request SID
 	CANTxRequest[1] 	= 0x22;
+
+	// Data identifier (request code)
 	CANTxRequest[2]		= 0x01;
 	CANTxRequest[3]		= 0x23;
+	// Unused
 	CANTxRequest[4]		= UNUSED_DATA;
 	CANTxRequest[5]		= UNUSED_DATA;
 	CANTxRequest[6]		= UNUSED_DATA;
@@ -66,30 +83,36 @@ void readDataByIdenfierRequest(CAN_HandleTypeDef *hcan)
 
 void readDataByIdenfierResponseCheck(uint8_t CANRxBuffer[])
 {
-	if (CANRxBuffer[0] == READ_DATA_BY_ID_RESPONSE_SID)
+	// Positive Response
+	if (CANRxBuffer[1] == READ_DATA_BY_ID_RESPONSE_SID)
 	{
-		if ((CANRxBuffer[1] == ((READ_DATA_BY_ID_RECORD >> 8) & 0xff)) &&
-				(CANRxBuffer[2] = (READ_DATA_BY_ID_RECORD & 0xff)))
+		if ((CANRxBuffer[2] == ((READ_DATA_BY_ID_RECORD >> 8) & 0xff)) &&
+				(CANRxBuffer[3] = (READ_DATA_BY_ID_RECORD & 0xff)))
 		{
-			if ((CANRxBuffer[3] == ((CAN_DIAGNOSTIC_REQUEST_ID >> 8) & 0xff)) &&
-					(CANRxBuffer[4] = (CAN_DIAGNOSTIC_REQUEST_ID & 0xff)))
+			if ((CANRxBuffer[4] == ((CAN_DIAGNOSTIC_REQUEST_ID >> 8) & 0xff)) &&
+					(CANRxBuffer[5] = (CAN_DIAGNOSTIC_REQUEST_ID & 0xff)))
 			{
 				HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
 			}
 		}
 	}
+	else
+	{
+		// Negative response
+		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+	}
 }
 
 void securityAccessSeedRequest(CAN_HandleTypeDef *hcan)
 {
-	uint8_t CANTxRequest[CAN_SEED_REQUEST_LENGTH];
+	uint8_t CANTxRequest[CAN_DATA_LENGTH];
 	CAN_TxHeaderTypeDef CANTxHeaderRequest;
 	uint32_t CANTxMailboxesRequest = CAN_TX_MAILBOX1;
 
 	CANTxHeaderRequest.StdId 	= CAN_DIAGNOSTIC_REQUEST_ID;
 	CANTxHeaderRequest.IDE 	= CAN_ID_STD;
 	CANTxHeaderRequest.RTR 	= CAN_RTR_DATA;
-	CANTxHeaderRequest.DLC 	= CAN_SEED_REQUEST_LENGTH;
+	CANTxHeaderRequest.DLC 	= CAN_DATA_LENGTH;
 
 	CANTxRequest[0] 	= 0x02;
 	CANTxRequest[1] 	= 0x27;

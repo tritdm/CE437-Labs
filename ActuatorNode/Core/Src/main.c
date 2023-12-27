@@ -17,7 +17,6 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -158,12 +157,18 @@ int main(void)
     {
     	if (CANDiagnosticRequestRcvFlag == 1)
     	{
+    		HAL_Delay(1000);
     		CANDiagnosticRequestRcvFlag = 0;
-    		readDataByIdentifierResponse(&hcan, &CANRxHeader, CANRxBuffer);
+//    		readDataByIdentifierResponse(&hcan, &CANRxHeader, CANRxBuffer);
     		writeDataByIdentifierResponse(&hcan, &CANRxHeader, CANRxBuffer);
     	}
+//    	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDR_Pin);
+//    	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDG_Pin);
+//    	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDB_Pin);
+    	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+
+
 //    	CANTransmit();
-//    	HAL_Delay(50);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -520,9 +525,13 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, SPI_SS_Pin|L_PWM_Pin, GPIO_PIN_RESET);
@@ -532,6 +541,13 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LEDR_Pin|LEDG_Pin|LEDB_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin : PC13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : SPI_SS_Pin L_PWM_Pin */
   GPIO_InitStruct.Pin = SPI_SS_Pin|L_PWM_Pin;
