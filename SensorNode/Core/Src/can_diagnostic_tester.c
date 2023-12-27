@@ -8,19 +8,23 @@ uint8_t seed[4], key[16];
 
 void writeShortDataByIdentifierRequest(CAN_HandleTypeDef *hcan)
 {
-	uint8_t CANTxRequest[CAN_REQUEST_LENGTH];
+	uint8_t CANTxRequest[READ_WRITE_REQUEST_LENGTH];
 	CAN_TxHeaderTypeDef CANTxHeaderRequest;
 	uint32_t CANTxMailboxesRequest = CAN_TX_MAILBOX1;
 
 	CANTxHeaderRequest.StdId = CAN_DIAGNOSTIC_REQUEST_ID;
 	CANTxHeaderRequest.IDE 	= CAN_ID_STD;
 	CANTxHeaderRequest.RTR 	= CAN_RTR_DATA;
-	CANTxHeaderRequest.DLC 	= CAN_REQUEST_LENGTH;
+	CANTxHeaderRequest.DLC 	= READ_WRITE_REQUEST_LENGTH;
 
 	CANTxRequest[0] 	= 0x03;
 	CANTxRequest[1] 	= 0x2e;
 	CANTxRequest[2]		= 0x01;
 	CANTxRequest[3]		= 0x23;
+	CANTxRequest[4]		= UNUSED_DATA;
+	CANTxRequest[5]		= UNUSED_DATA;
+	CANTxRequest[6]		= UNUSED_DATA;
+	CANTxRequest[7]		= UNUSED_DATA;
 
 	CAN_Transmit(hcan, &CANTxHeaderRequest, CANTxRequest, &CANTxMailboxesRequest);
 
@@ -37,19 +41,23 @@ void writeDataByIdenfierResponseCheck(uint8_t CANRxBuffer[])
 
 void readDataByIdenfierRequest(CAN_HandleTypeDef *hcan)
 {
-	uint8_t CANTxRequest[CAN_REQUEST_LENGTH];
+	uint8_t CANTxRequest[READ_WRITE_REQUEST_LENGTH];
 	CAN_TxHeaderTypeDef CANTxHeaderRequest;
 	uint32_t CANTxMailboxesRequest = CAN_TX_MAILBOX1;
 
 	CANTxHeaderRequest.StdId 	= CAN_DIAGNOSTIC_REQUEST_ID;
 	CANTxHeaderRequest.IDE 	= CAN_ID_STD;
 	CANTxHeaderRequest.RTR 	= CAN_RTR_DATA;
-	CANTxHeaderRequest.DLC 	= CAN_REQUEST_LENGTH;
+	CANTxHeaderRequest.DLC 	= READ_WRITE_REQUEST_LENGTH;
 
 	CANTxRequest[0] 	= 0x03;
 	CANTxRequest[1] 	= 0x22;
 	CANTxRequest[2]		= 0x01;
 	CANTxRequest[3]		= 0x23;
+	CANTxRequest[4]		= UNUSED_DATA;
+	CANTxRequest[5]		= UNUSED_DATA;
+	CANTxRequest[6]		= UNUSED_DATA;
+	CANTxRequest[7]		= UNUSED_DATA;
 
 	CAN_Transmit(hcan, &CANTxHeaderRequest, CANTxRequest, &CANTxMailboxesRequest);
 
@@ -86,6 +94,11 @@ void securityAccessSeedRequest(CAN_HandleTypeDef *hcan)
 	CANTxRequest[0] 	= 0x02;
 	CANTxRequest[1] 	= 0x27;
 	CANTxRequest[2]		= 0x01;
+	CANTxRequest[3]		= UNUSED_DATA;
+	CANTxRequest[4]		= UNUSED_DATA;
+	CANTxRequest[5]		= UNUSED_DATA;
+	CANTxRequest[6]		= UNUSED_DATA;
+	CANTxRequest[7]		= UNUSED_DATA;
 
 	CAN_Transmit(hcan, &CANTxHeaderRequest, CANTxRequest, &CANTxMailboxesRequest);
 
@@ -103,18 +116,18 @@ void securityAccessSeedResponseCheck(uint8_t CANRxBuffer[])
 			seed[2] = CANRxBuffer[4];
 			seed[3] = CANRxBuffer[5];
 
-			key[0] = seed[0] ^ seed[1];
-			key[1] = seed[1] + seed[2];
-			key[2] = seed[2] ^ seed[3];
-			key[3] = seed[3] + seed[0];
+			key[0] 	= seed[0] ^ seed[1];
+			key[1] 	= seed[1] + seed[2];
+			key[2] 	= seed[2] ^ seed[3];
+			key[3] 	= seed[3] + seed[0];
 
-			key[4] = seed[0] | seed[1];
-			key[5] = seed[1] + seed[2];
-			key[6] = seed[2] | seed[3];
-			key[7] = seed[3] + seed[1];
+			key[4] 	= seed[0] | seed[1];
+			key[5] 	= seed[1] + seed[2];
+			key[6] 	= seed[2] | seed[3];
+			key[7] 	= seed[3] + seed[1];
 
-			key[8] = seed[0] & seed[1];
-			key[9] = seed[1] ^ seed[2];
+			key[8] 	= seed[0] & seed[1];
+			key[9] 	= seed[1] ^ seed[2];
 			key[10] = seed[2] & seed[3];
 			key[11] = seed[3] ^ seed[0];
 
@@ -167,6 +180,9 @@ void securityAccessUnlockRequest(CAN_HandleTypeDef *hcan)
 	CANTxRequest[2] 	= key[13];
 	CANTxRequest[3]		= key[14];
 	CANTxRequest[4]		= key[15];
+	CANTxRequest[5] 	= UNUSED_DATA;
+	CANTxRequest[6]		= UNUSED_DATA;
+	CANTxRequest[7]		= UNUSED_DATA;
 
 	CAN_Transmit(hcan, &CANTxHeaderRequest, CANTxRequest, &CANTxMailboxesRequest);
 
@@ -175,7 +191,6 @@ void securityAccessUnlockRequest(CAN_HandleTypeDef *hcan)
 
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-
 	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &CANRxHeader, CANRxBuffer) != HAL_OK)
 	{
 		Error_Handler();

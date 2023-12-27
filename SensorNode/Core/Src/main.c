@@ -140,14 +140,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	readDataByIdenfierRequest(&hcan);
-	  writeShortDataByIdentifierRequest(&hcan);
+	readDataByIdenfierRequest(&hcan);
+//	  writeShortDataByIdentifierRequest(&hcan);
 	HAL_Delay(50);
 	if (CANDiagnosticResponseRcvFlag == 1)
 	{
 		CANDiagnosticResponseRcvFlag = 0;
-//		readDataByIdenfierResponseCheck(CANRxBuffer);
-		writeDataByIdenfierResponseCheck(CANRxBuffer);
+		readDataByIdenfierResponseCheck(CANRxBuffer);
+//		writeDataByIdenfierResponseCheck(CANRxBuffer);
 	}
     /* USER CODE END WHILE */
 
