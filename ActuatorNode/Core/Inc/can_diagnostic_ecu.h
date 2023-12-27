@@ -8,8 +8,8 @@
 
 #define CAN_PCI_SINGLE_FRAME 			0x00
 #define CAN_PCI_FIRST_FRAME				0x01
-#define CAN_PCI_CONSECUTIVE_FRAME		0x10
-#define CAN_PCI_FLOW_CONTROL			0x11
+#define CAN_PCI_CONSECUTIVE_FRAME		0x02
+#define CAN_PCI_FLOW_CONTROL			0x03
 #define UNUSED_DATA						0x55
 
 #define NEGATIVE_RESPONSE				0x7f
@@ -39,5 +39,13 @@ uint8_t readDataByIdentifierResponse(CAN_HandleTypeDef *hcan, CAN_RxHeaderTypeDe
 uint8_t writeDataByIdentifierResponse(CAN_HandleTypeDef *hcan, CAN_RxHeaderTypeDef *CANRxHeader, uint8_t CANRxData[]);
 
 uint8_t CANNegativeResponse(CAN_HandleTypeDef *hcan, uint8_t CANPCI, uint8_t CANNegativeResponseCode);
+
+uint8_t securityAccessSeedGenerate(CAN_HandleTypeDef *hcan, CAN_RxHeaderTypeDef *CANRxHeader, uint8_t CANRxData[]);
+
+uint8_t flowControlResponse(CAN_HandleTypeDef *hcan, CAN_RxHeaderTypeDef *CANRxHeader, uint8_t CANRxData[]);
+
+uint8_t keyCheck();
+
+uint8_t securityAccessKeyResponse(CAN_HandleTypeDef *hcan);
 
 #endif /* __CAN_DIAGNOSTIC_H__ */

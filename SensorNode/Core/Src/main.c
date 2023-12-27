@@ -77,20 +77,23 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-//void CANTransmit()
-//{
-//	CANTxHeader.StdId 	= CAN_TX_STD_ID;
-//	CANTxHeader.IDE 	= CAN_ID_STD;
-//	CANTxHeader.RTR 	= CAN_RTR_DATA;
-//	CANTxHeader.DLC 	= CAN_DATA_LENGTH;
-//
-//	CANTxBuffer[7] 		= (CANTxBuffer[7] + 1)%255;
-//
-//	if (HAL_CAN_AddTxMessage(&hcan, &CANTxHeader, CANTxBuffer, &CANTxMailboxes) == HAL_OK)
-//	{
-//		HAL_GPIO_TogglePin(GPIO_Port, LEDR_Pin);
-//	}
-//}
+void security()
+{
+	if (securityAccessSeedResponseCheck(CANRxBuffer))
+	{
+		securityAccessUnlockRequest(&hcan);
+		HAL_Delay(100);
+		while (CANDiagnosticResponseRcvFlag != 1);
+		CANDiagnosticResponseRcvFlag = 0;
+		if (flowControlCheck(CANRxBuffer))
+		{
+			HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
+			securityRemainKeySend(&hcan);
+			while (CANDiagnosticResponseRcvFlag != 1);
+			CANDiagnosticResponseRcvFlag = 0;
+		}
+	}
+}
 /* USER CODE END 0 */
 
 /**
@@ -138,20 +141,37 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
-  {
-//	readDataByIdenfierRequest(&hcan);
-	writeShortDataByIdentifierRequest(&hcan);
-	HAL_Delay(2000);
-	if (CANDiagnosticResponseRcvFlag == 1)
-	{
-		CANDiagnosticResponseRcvFlag = 0;
-//		readDataByIdenfierResponseCheck(CANRxBuffer);
-		writeDataByIdenfierResponseCheck(CANRxBuffer);
-	}
-    /* USER CODE END WHILE */
+   {
+// 	readDataByIdenfierRequest(&hcan);
+// 	writeShortDataByIdentifierRequest(&hcan);
+ 	securityAccessSeedRequest(&hcan);
+// 	HAL_Delay(2000);
+ 	while (CANDiagnosticResponseRcvFlag != 1);
+ 	{
+ 		CANDiagnosticResponseRcvFlag = 0;
+// 		readDataByIdenfierResponseCheck(CANRxBuffer);
+// 		writeDataByIdenfierResponseCheck(CANRxBuffer);
+ 		if (securityAccessSeedResponseCheck(CANRxBuffer))
+ 		{
+ 			securityAccessUnlockRequest(&hcan);
+ 			HAL_Delay(100);
+ 			while (CANDiagnosticResponseRcvFlag != 1);
+ 			{
+ 				CANDiagnosticResponseRcvFlag = 0;
+ 				if (flowControlCheck(CANRxBuffer))
+ 				{
+ 					HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
+ 					securityRemainKeySend(&hcan);
+ 					while (CANDiagnosticResponseRcvFlag != 1);
+ 					CANDiagnosticResponseRcvFlag = 0;
+ 				}
+ 			}
+ 		}
+ 	}
+     /* USER CODE END WHILE */
 
-    /* USER CODE BEGIN 3 */
-  }
+     /* USER CODE BEGIN 3 */
+   }
   /* USER CODE END 3 */
 }
 

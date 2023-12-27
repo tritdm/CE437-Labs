@@ -8,8 +8,8 @@
 
 #define CAN_PCI_SINGLE_FRAME 			0x00
 #define CAN_PCI_FIRST_FRAME				0x01
-#define CAN_PCI_CONSECUTIVE_FRAME		0x10
-#define CAN_PCI_FLOW_CONTROL			0x11
+#define CAN_PCI_CONSECUTIVE_FRAME		0x02
+#define CAN_PCI_FLOW_CONTROL			0x03
 
 #define READ_WRITE_REQUEST_LENGTH		0x04
 #define UNUSED_DATA						0x55
@@ -46,5 +46,15 @@ void readDataByIdenfierRequest(CAN_HandleTypeDef *hcan);
 void writeDataByIdenfierResponseCheck(uint8_t CANRxBuffer[]);
 
 void readDataByIdenfierResponseCheck(uint8_t CANRxBuffer[]);
+
+void securityAccessSeedRequest(CAN_HandleTypeDef *hcan);
+
+uint8_t securityAccessSeedResponseCheck(uint8_t CANRxBuffer[]);
+
+void securityRemainKeySend(CAN_HandleTypeDef *hcan);
+
+uint8_t flowControlCheck(uint8_t CANRxData[]);
+
+void securityAccessUnlockRequest(CAN_HandleTypeDef *hcan);
 
 #endif /* __CAN_DIAGNOSTIC_H__ */

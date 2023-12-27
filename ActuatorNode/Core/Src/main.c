@@ -82,27 +82,20 @@ static void MX_CAN_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-//void CANResponse()
-//{
-//	for (int _byte = 0; _byte < 8; ++ _byte)
-//	{
-//		CANTxBuffer[_byte] = CANRxBuffer[_byte];
-//	}
-//
-//	CANTxBuffer[2] = CANTxBuffer[0] + CANTxBuffer[1];
-//
-////	CANTxBuffer[7] = SAE_J1850_Calc(CANTxBuffer, 7);
-//
-//	CANTxHeader.StdId 	= CAN_TX_STD_ID;
-//	CANTxHeader.IDE 	= CAN_ID_STD;
-//	CANTxHeader.RTR 	= CAN_RTR_DATA;
-//	CANTxHeader.DLC 	= CAN_DATA_LENGTH;
-//
-//	if (HAL_CAN_AddTxMessage(&hcan, &CANTxHeader, CANTxBuffer, &CANTxMailboxes) == HAL_OK)
-//	{
-//
-//	}
-//}
+void securityResponse()
+{
+	if (securityAccessSeedGenerate(&hcan, &CANRxHeader, CANRxBuffer))
+	{
+		while (CANDiagnosticRequestRcvFlag != 1);
+
+		CANDiagnosticRequestRcvFlag = 0;
+		flowControlResponse(&hcan, &CANRxHeader, CANRxBuffer);
+		while (CANDiagnosticRequestRcvFlag != 1);
+
+		CANDiagnosticRequestRcvFlag = 0;
+		securityAccessKeyResponse(&hcan);
+	}
+}
 /* USER CODE END 0 */
 
 /**
@@ -153,26 +146,34 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-    while (1)
-    {
-    	if (CANDiagnosticRequestRcvFlag == 1)
-    	{
-    		HAL_Delay(1000);
-    		CANDiagnosticRequestRcvFlag = 0;
-//    		readDataByIdentifierResponse(&hcan, &CANRxHeader, CANRxBuffer);
-    		writeDataByIdentifierResponse(&hcan, &CANRxHeader, CANRxBuffer);
-    	}
-//    	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDR_Pin);
-//    	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDG_Pin);
-//    	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDB_Pin);
-    	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+  while (1)
+  {
+	while (CANDiagnosticRequestRcvFlag != 1);
+	{
+//		HAL_Delay(1000);
+		CANDiagnosticRequestRcvFlag = 0;
+//    	readDataByIdentifierResponse(&hcan, &CANRxHeader, CANRxBuffer);
+//    	writeDataByIdentifierResponse(&hcan, &CANRxHeader, CANRxBuffer);
+		if (securityAccessSeedGenerate(&hcan, &CANRxHeader, CANRxBuffer))
+		{
+			while (CANDiagnosticRequestRcvFlag != 1);
+			{
+				CANDiagnosticRequestRcvFlag = 0;
+				flowControlResponse(&hcan, &CANRxHeader, CANRxBuffer);
+				while (CANDiagnosticRequestRcvFlag != 1);
+				{
+					CANDiagnosticRequestRcvFlag = 0;
+					securityAccessKeyResponse(&hcan);
+				}
+			}
+		}
+	}
+ //    	CANTransmit();
+ //    	HAL_Delay(50);
+     /* USER CODE END WHILE */
 
-
-//    	CANTransmit();
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-    }
+     /* USER CODE BEGIN 3 */
+     }
   /* USER CODE END 3 */
 }
 
