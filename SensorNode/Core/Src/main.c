@@ -135,6 +135,7 @@ int main(void)
   }
   HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
 
+
   //init 2 VL53L0X sensors
 //  if(!initDuelSensors(&hi2c1, ADDRESS_Sensor0, ADDRESS_Sensor1))
 //  {
@@ -143,7 +144,9 @@ int main(void)
 
 	statInfo_t_VL53L0X distanceStr;
 	initVL53L0X(1, &hi2c1);
-
+	HAL_GPIO_WritePin(LEDG_GPIO_Port, LEDG_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(LEDB_GPIO_Port, LEDB_Pin, GPIO_PIN_RESET);
 	// Configure the sensor for high accuracy and speed in 20 cm.
 	setSignalRateLimit(200);
 	setVcselPulsePeriod(VcselPeriodPreRange, 10);
@@ -158,21 +161,21 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	CANTransmit();
-	HAL_Delay(50);
-	if (CANDataRcvFlag == 1)
-	{
-		CANDataRcvFlag = 0;
-		if ((CANRxBuffer[0] == CANTxBuffer[0]) && (CANRxBuffer[1] == CANTxBuffer[1]))
-		{
-			if (CANRxBuffer[2] == CANRxBuffer[0] + CANRxBuffer[1])
-			{
-				HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
-				if (CANRxBuffer[7]);
-			}
-		}
-
-	}
+//	CANTransmit();
+//	HAL_Delay(50);
+//	if (CANDataRcvFlag == 1)
+//	{
+//		CANDataRcvFlag = 0;
+//		if ((CANRxBuffer[0] == CANTxBuffer[0]) && (CANRxBuffer[1] == CANTxBuffer[1]))
+//		{
+//			if (CANRxBuffer[2] == CANRxBuffer[0] + CANRxBuffer[1])
+//			{
+//				HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
+//				if (CANRxBuffer[7]);
+//			}
+//		}
+//
+//	}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
