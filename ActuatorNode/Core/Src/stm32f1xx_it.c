@@ -42,7 +42,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+extern int timeCountPID;
+extern int timeCountTest;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -191,14 +192,10 @@ void SysTick_Handler(void)
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
   encoderInfo.timeIndex++;
+  timeCountPID++;
+  timeCountTest++;
+//  encoderInfo.encodeCnt = (int16_t)__HAL_TIM_GET_COUNTER(&htim2);
 
-	if (encoderInfo.timeIndex == 100) //500 ms
-	{
-		encoderInfo.numRoundPerSec = ((encoderInfo.position - encoderInfo.prePosition)*10);  // speed in clicks/sec
-		encoderInfo.speed = encoderInfo.numRoundPerSec * CIRCUMFERENCE_OF_WHEEL;
-		encoderInfo.prePosition = encoderInfo.position;
-		encoderInfo.timeIndex = 0;
-	}
   /* USER CODE END SysTick_IRQn 1 */
 }
 

@@ -26,6 +26,8 @@
 #include "uart.h"
 #include "can.h"
 #include "motor.h"
+#include "servo.h"
+#include "pid.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -70,6 +72,8 @@ extern CAN_RxHeaderTypeDef CANRxHeader;
 bts7960_config	motor1;
 
 encoderMotor encoderInfo = {.encodeCnt = 0, .position = 0, .preEncoderCnt = 0, .prePosition = 0, .speed = 0, .timeIndex = 0, .numRoundPerSec = 0};
+int timeCountPID = 0;
+int timeCountTest = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -84,7 +88,7 @@ static void MX_USART1_UART_Init(void);
 static void MX_CAN_Init(void);
 static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
-
+int refvelo = 30;
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -157,8 +161,12 @@ int main(void)
 	  Error_Handler();
   }
   HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
-  printf("Actuator\n");
+//  printf("Actuator\n");
+
   startMotor(&motor1);
+  uint8_t PWM = 0;
+  float outPID = 0;
+//  initServo();
   //  Monitor_Show();
   /* USER CODE END 2 */
 
@@ -171,13 +179,32 @@ int main(void)
 //    		CANDataRcvFlag = 0;
 //    		CANResponse();
 //    	}
+
 //    	CANTransmit();
 //    	HAL_Delay(50);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    	printf("\nCount %d", encoderInfo.encodeCnt);
-    	printf("\nSpeed %d", encoderInfo.speed);
+    	if(timeCountTest >= 10000)
+    	{
+    		if( refvelo >= 60)
+    		{
+    			refvelo = 30;
+    		}
+    		else
+    		{
+    			refvelo+=5;
+    		}
+    		timeCountTest = 0;
+    	}
+    	updateEncoder();
+    	outPID = PID(refvelo, encoderInfo.speed);
+    	PWM = velocityToPWM(outPID);
+    	goForward(&motor1, PWM);
+    	printf("\ns %.01f", encoderInfo.speed);
+    	printf("\no %.01f", outPID);
+    	printf("\nr %d\n", refvelo);
+    	HAL_Delay(100);
     }
   /* USER CODE END 3 */
 }
@@ -363,9 +390,9 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 1439;
+  htim1.Init.Prescaler = 15;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 65535;
+  htim1.Init.Period = 99;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -436,7 +463,7 @@ static void MX_TIM2_Init(void)
   htim2.Init.Period = 65535;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  sConfig.EncoderMode = TIM_ENCODERMODE_TI12;
+  sConfig.EncoderMode = TIM_ENCODERMODE_TI1;
   sConfig.IC1Polarity = TIM_ICPOLARITY_RISING;
   sConfig.IC1Selection = TIM_ICSELECTION_DIRECTTI;
   sConfig.IC1Prescaler = TIM_ICPSC_DIV1;
@@ -525,9 +552,9 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 0;
+  htim4.Init.Prescaler = 719;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 65535;
+  htim4.Init.Period = 1999;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
@@ -600,9 +627,13 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SPI_SS_GPIO_Port, SPI_SS_Pin, GPIO_PIN_RESET);
@@ -612,6 +643,13 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LEDR_Pin|LEDG_Pin|LEDB_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin : PC13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SPI_SS_Pin */
   GPIO_InitStruct.Pin = SPI_SS_Pin;

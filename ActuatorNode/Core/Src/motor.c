@@ -16,15 +16,15 @@ extern encoderMotor encoderInfo;
 //}
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
-	if (htim->Instance == htim2.Instance)
-		{
-		encoderInfo.encodeCnt = (int16_t)__HAL_TIM_GET_COUNTER(htim);
-		encoderInfo.position = encoderInfo.encodeCnt/encoderResolution;
-		}
-		else
-		{
-			__NOP();
-		}
+//	if (htim->Instance == htim2.Instance)
+//		{
+//		encoderInfo.encodeCnt = (int16_t)__HAL_TIM_GET_COUNTER(htim);
+////		encoderInfo.position = encoderInfo.encodeCnt/encoderResolution;
+//		}
+//		else
+//		{
+//			__NOP();
+//		}
 //	counter = __HAL_TIM_GET_COUNTER(htim);
 //
 //	count = (int16_t)counter;
@@ -33,7 +33,23 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 }
 void startEncoder()
 {
-	HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
+//	HAL_TIM_Encoder_Start_IT(&htim2, TIM_CHANNEL_ALL);
+	HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
+}
+void updateEncoder()
+{
+	if (encoderInfo.timeIndex >= 100) //100 ms
+		{
+			encoderInfo.encodeCnt = (int16_t)__HAL_TIM_GET_COUNTER(&htim2);
+			encoderInfo.numRoundPerSec = ((-(encoderInfo.encodeCnt - encoderInfo.preEncoderCnt)*10)/encoderResolution);  // speed in cm/sec
+			encoderInfo.speed = (float)encoderInfo.numRoundPerSec * CIRCUMFERENCE_OF_WHEEL;
+			encoderInfo.preEncoderCnt = encoderInfo.encodeCnt;
+			encoderInfo.timeIndex = 0;
+//			HAL_GPIO_TogglePin(LEDB_GPIO_Port, LEDB_Pin);
+//			HAL_GPIO_TogglePin(LEDG_GPIO_Port, LEDG_Pin);
+//			HAL_GPIO_TogglePin(LEDR_GPIO_Port, LEDR_Pin);
+//			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+		}
 }
 void bts7960_init (		bts7960_config* bts7960_config,
 						TIM_HandleTypeDef* 		Timer_Handle,
@@ -72,6 +88,16 @@ void bts7960_init (		bts7960_config* bts7960_config,
 //
 //	}
 //}
+uint8_t scalePWM(uint8_t PWM)
+{
+    return (PWM > 100) ? 100 : (PWM < 0) ? 0 : PWM;
+}
+float velocityToPWM(float velocity)
+{
+	return (0.0014f * velocity * velocity  + 0.1236f * velocity + 16.496f);
+	// phương trình dựa trên PWM và vận tốc đo được
+	// từ encoder khi xe chịu tải
+}
 void startMotor(bts7960_config* bts7960_config)
 {
 	bts7960_config->bts_set.durum = START;
@@ -79,8 +105,6 @@ void startMotor(bts7960_config* bts7960_config)
 	HAL_GPIO_WritePin(bts7960_config->En_R_GPIOx, bts7960_config->En_R_GPIO_Pin, GPIO_PIN_SET);
 	HAL_TIM_PWM_Start_IT(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_L);
 	HAL_TIM_PWM_Start_IT(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_R);
-	__HAL_TIM_SET_COMPARE(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_L, 0);
-	__HAL_TIM_SET_COMPARE(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_R, 100);
 }
 
 void stopMotor(bts7960_config* bts7960_config)
@@ -92,16 +116,18 @@ void stopMotor(bts7960_config* bts7960_config)
 	HAL_TIM_PWM_Stop_IT(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_R);
 }
 
-void goForward(bts7960_config* bts7960_config, uint16_t PWM )
+void goForward(bts7960_config* bts7960_config, uint8_t PWM )
 {
 	bts7960_config->bts_set.durum = FORWARD;
-	__HAL_TIM_SET_COMPARE(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_L, PWM);
-	__HAL_TIM_SET_COMPARE(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_R, 0);
-}
-
-void goReverse(bts7960_config* bts7960_config, uint16_t PWM)
-{
-	bts7960_config->bts_set.durum = REVERSE;
+	PWM = scalePWM(PWM);
 	__HAL_TIM_SET_COMPARE(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_L, 0);
 	__HAL_TIM_SET_COMPARE(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_R, PWM);
+}
+
+void goReverse(bts7960_config* bts7960_config, uint8_t PWM)
+{
+	PWM = scalePWM(PWM);
+	bts7960_config->bts_set.durum = REVERSE;
+	__HAL_TIM_SET_COMPARE(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_L, PWM);
+	__HAL_TIM_SET_COMPARE(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_R, 0);
 }
