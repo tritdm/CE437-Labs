@@ -82,12 +82,10 @@ void Error_Handler(void);
 #define LEDB_Pin GPIO_PIN_5
 #define LEDB_GPIO_Port GPIOB
 
+/* USER CODE BEGIN Private defines */
 #define KP 2.2
 #define KI 0.18
 #define KD 0.03
-
-/* USER CODE BEGIN Private defines */
-
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

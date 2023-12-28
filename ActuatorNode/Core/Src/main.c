@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -59,6 +60,20 @@ TIM_HandleTypeDef htim4;
 
 UART_HandleTypeDef huart1;
 
+/* Definitions for actionTask */
+osThreadId_t actionTaskHandle;
+const osThreadAttr_t actionTask_attributes = {
+  .name = "actionTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
+};
+/* Definitions for getDataTask */
+osThreadId_t getDataTaskHandle;
+const osThreadAttr_t getDataTask_attributes = {
+  .name = "getDataTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityAboveNormal,
+};
 /* USER CODE BEGIN PV */
 /* CAN Tx variables */
 CAN_TxHeaderTypeDef CANTxHeader;
@@ -74,6 +89,7 @@ encoderMotor encoderInfo = {.encodeCnt = 0, .position = 0, .preEncoderCnt = 0, .
 PIDInfor pidInfor = {.kp = KP, .ki = KI, .kd = KD, .error = 0, .prevError = 0, .errorIntergral = 0, .currT = 0, .prevT = 0, .deltaT = 0, .outputPID = 0, .timeCountPID = 0};
 int timeCountTest = 0;
 bool isPrint = false;
+int refSpeed = 30;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -87,33 +103,16 @@ static void MX_TIM4_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_CAN_Init(void);
 static void MX_TIM1_Init(void);
+void StartActionThread(void *argument);
+void StartGetDataTask(void *argument);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void CANResponse()
-{
-	for (int _byte = 0; _byte < 8; ++ _byte)
-	{
-		CANTxBuffer[_byte] = CANRxBuffer[_byte];
-	}
 
-	CANTxBuffer[2] = CANTxBuffer[0] + CANTxBuffer[1];
-
-//	CANTxBuffer[7] = SAE_J1850_Calc(CANTxBuffer, 7);
-
-	CANTxHeader.StdId 	= CAN_TX_STD_ID;
-	CANTxHeader.IDE 	= CAN_ID_STD;
-	CANTxHeader.RTR 	= CAN_RTR_DATA;
-	CANTxHeader.DLC 	= CAN_DATA_LENGTH;
-
-	if (HAL_CAN_AddTxMessage(&hcan, &CANTxHeader, CANTxBuffer, &CANTxMailboxes) == HAL_OK)
-	{
-
-	}
-}
 /* USER CODE END 0 */
 
 /**
@@ -160,12 +159,47 @@ int main(void)
   startMotor(&motor1);
   initServo();
 //  printf("Actuator\n");
-  int refSpeed = 30;
-  int refSpeedChangeMode = 0;
-  uint8_t PWM = 0;
-  float outPID = 0;
+
   /* USER CODE END 2 */
 
+  /* Init scheduler */
+  osKernelInitialize();
+
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* creation of actionTask */
+  actionTaskHandle = osThreadNew(StartActionThread, NULL, &actionTask_attributes);
+
+  /* creation of getDataTask */
+  getDataTaskHandle = osThreadNew(StartGetDataTask, NULL, &getDataTask_attributes);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* add events, ... */
+  /* USER CODE END RTOS_EVENTS */
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
     while (1)
@@ -173,39 +207,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    	if(timeCountTest < 3000)
-    	{
-    		setAngle(10);
-    	}
-    	else if (timeCountTest >= 3000 && timeCountTest < 6000)
-    	{
-    		setAngle(80);
-    	}
 
-    	else if(timeCountTest >= 10000)
-    	{
-    		setAngle(45);
-    		if(refSpeed >= 60) refSpeedChangeMode = 0;
-    		else if (refSpeed <= 30) refSpeedChangeMode = 1;
-
-    		if(refSpeedChangeMode) refSpeed += 5;
-    		else refSpeed -= 5;
-
-    		timeCountTest = 0;
-    	}
-
-    	updateEncoder();
-    	outPID = PID(refSpeed, encoderInfo.speed);
-    	PWM = speedToPWM(outPID);
-    	goForward(&motor1, PWM);
-
-    	if(isPrint)
-    	{
-    		printf("\ns %.01f", encoderInfo.speed);
-    	    printf("\no %.01f", outPID);
-    	    printf("\nr %d\n", refSpeed);
-    	    isPrint = false;
-    	}
 
 //    	HAL_Delay(100);
     }
@@ -683,6 +685,77 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartActionThread */
+/**
+  * @brief  Function implementing the actionTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartActionThread */
+void StartActionThread(void *argument)
+{
+  /* USER CODE BEGIN 5 */
+	  uint8_t PWM = 0;
+	  float outPID = 0;
+  /* Infinite loop */
+  for(;;)
+  {
+	updateEncoder();
+	outPID = PID(refSpeed, encoderInfo.speed);
+	PWM = speedToPWM(outPID);
+	goForward(&motor1, PWM);
+
+	if(isPrint)
+	{
+		printf("\ns %.01f", encoderInfo.speed);
+	    printf("\no %.01f", outPID);
+	    printf("\nr %d\n", refSpeed);
+	    isPrint = false;
+	}
+//    osDelay(1);
+  }
+  /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_StartGetDataTask */
+/**
+* @brief Function implementing the getDataTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartGetDataTask */
+void StartGetDataTask(void *argument)
+{
+  /* USER CODE BEGIN StartGetDataTask */
+	  int refSpeedChangeMode = 0;
+  /* Infinite loop */
+  for(;;)
+  {
+	if(timeCountTest < 3000)
+	{
+		setAngle(10);
+	}
+	else if (timeCountTest >= 3000 && timeCountTest < 6000)
+	{
+		setAngle(80);
+	}
+
+	else if(timeCountTest >= 10000)
+	{
+		setAngle(45);
+		if(refSpeed >= 60) refSpeedChangeMode = 0;
+		else if (refSpeed <= 30) refSpeedChangeMode = 1;
+
+		if(refSpeedChangeMode) refSpeed += 5;
+		else refSpeed -= 5;
+
+		timeCountTest = 0;
+	}
+//    osDelay(1);
+  }
+  /* USER CODE END StartGetDataTask */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.
