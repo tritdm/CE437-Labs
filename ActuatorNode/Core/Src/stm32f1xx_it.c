@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "motor.h"
+#include "pid.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -42,8 +43,9 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-extern int timeCountPID;
+//extern int timeCountPID;
 extern int timeCountTest;
+extern PIDInfor pidInfor;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -192,7 +194,7 @@ void SysTick_Handler(void)
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
   encoderInfo.timeIndex++;
-  timeCountPID++;
+  pidInfor.timeCountPID++;
   timeCountTest++;
 //  encoderInfo.encodeCnt = (int16_t)__HAL_TIM_GET_COUNTER(&htim2);
 
