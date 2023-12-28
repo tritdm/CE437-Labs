@@ -51,7 +51,7 @@ void updateEncoder()
 //			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 		}
 }
-void bts7960_init (		bts7960_config* bts7960_config,
+void motorInit (		motorConfig* bts7960_config,
 						TIM_HandleTypeDef* 		Timer_Handle,
 						uint16_t				Timer_Channel_L,
 						uint16_t				Timer_Channel_R,
@@ -71,63 +71,46 @@ void bts7960_init (		bts7960_config* bts7960_config,
 	bts7960_config->En_R_GPIO_Pin	= En_R_GPIO_Pin;
 }
 
-//void bts_start(bts7960_config* bts7960_config, uint16_t state){
-//
-//	if(state == START){
-//		bts7960_config->bts_set.durum = state;
-//		HAL_GPIO_WritePin(bts7960_config->En_L_GPIOx, bts7960_config->En_L_GPIO_Pin, GPIO_PIN_SET);
-//		HAL_TIM_PWM_Start_IT(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel);
-//		__HAL_TIM_SET_COMPARE(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel, 200);
-//
-//	}
-//	else{
-//		bts7960_config->bts_set.durum = state;
-//		HAL_GPIO_WritePin(bts7960_config->En_L_GPIOx, bts7960_config->En_L_GPIO_Pin, GPIO_PIN_RESET);
-//		HAL_TIM_PWM_Stop_IT(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_L);
-//		HAL_TIM_PWM_Stop_IT(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_R);
-//
-//	}
-//}
 uint8_t scalePWM(uint8_t PWM)
 {
     return (PWM > 100) ? 100 : (PWM < 0) ? 0 : PWM;
 }
-float velocityToPWM(float velocity)
+float speedToPWM(float velocity)
 {
 	return (0.0014f * velocity * velocity  + 0.1236f * velocity + 16.496f);
 	// phương trình dựa trên PWM và vận tốc đo được
 	// từ encoder khi xe chịu tải
 }
-void startMotor(bts7960_config* bts7960_config)
+void startMotor(motorConfig* bts7960_config)
 {
-	bts7960_config->bts_set.durum = START;
+	bts7960_config->motorStatus.state = START;
 	HAL_GPIO_WritePin(bts7960_config->En_L_GPIOx, bts7960_config->En_L_GPIO_Pin, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(bts7960_config->En_R_GPIOx, bts7960_config->En_R_GPIO_Pin, GPIO_PIN_SET);
 	HAL_TIM_PWM_Start_IT(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_L);
 	HAL_TIM_PWM_Start_IT(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_R);
 }
 
-void stopMotor(bts7960_config* bts7960_config)
+void stopMotor(motorConfig* bts7960_config)
 {
-	bts7960_config->bts_set.durum = STOP;
+	bts7960_config->motorStatus.state = STOP;
 	HAL_GPIO_WritePin(bts7960_config->En_L_GPIOx, bts7960_config->En_L_GPIO_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(bts7960_config->En_R_GPIOx, bts7960_config->En_R_GPIO_Pin, GPIO_PIN_RESET);
 	HAL_TIM_PWM_Stop_IT(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_L);
 	HAL_TIM_PWM_Stop_IT(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_R);
 }
 
-void goForward(bts7960_config* bts7960_config, uint8_t PWM )
+void goForward(motorConfig* bts7960_config, uint8_t PWM )
 {
-	bts7960_config->bts_set.durum = FORWARD;
+	bts7960_config->motorStatus.state = FORWARD;
 	PWM = scalePWM(PWM);
 	__HAL_TIM_SET_COMPARE(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_L, 0);
 	__HAL_TIM_SET_COMPARE(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_R, PWM);
 }
 
-void goReverse(bts7960_config* bts7960_config, uint8_t PWM)
+void goReverse(motorConfig* bts7960_config, uint8_t PWM)
 {
 	PWM = scalePWM(PWM);
-	bts7960_config->bts_set.durum = REVERSE;
+	bts7960_config->motorStatus.state = REVERSE;
 	__HAL_TIM_SET_COMPARE(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_L, PWM);
 	__HAL_TIM_SET_COMPARE(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_R, 0);
 }

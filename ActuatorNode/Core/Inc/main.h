@@ -33,6 +33,7 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -80,6 +81,10 @@ void Error_Handler(void);
 #define LEDG_GPIO_Port GPIOB
 #define LEDB_Pin GPIO_PIN_5
 #define LEDB_GPIO_Port GPIOB
+
+#define KP 2.2
+#define KI 0.18
+#define KD 0.03
 
 /* USER CODE BEGIN Private defines */
 

@@ -69,11 +69,11 @@ extern uint8_t CANRxBuffer[];
 extern uint8_t CANDataRcvFlag;
 extern CAN_RxHeaderTypeDef CANRxHeader;
 
-bts7960_config	motor1;
-
+motorConfig	motor1;
 encoderMotor encoderInfo = {.encodeCnt = 0, .position = 0, .preEncoderCnt = 0, .prePosition = 0, .speed = 0, .timeIndex = 0, .numRoundPerSec = 0};
-int timeCountPID = 0;
+PIDInfor pidInfor = {.kp = KP, .ki = KI, .kd = KD, .error = 0, .prevError = 0, .errorIntergral = 0, .currT = 0, .prevT = 0, .deltaT = 0, .outputPID = 0, .timeCountPID = 0};
 int timeCountTest = 0;
+bool isPrint = false;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -88,7 +88,7 @@ static void MX_USART1_UART_Init(void);
 static void MX_CAN_Init(void);
 static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
-int refvelo = 30;
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -154,57 +154,60 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
-  startEncoder();
-  bts7960_init(&motor1, &htim1, TIM_CHANNEL_1, TIM_CHANNEL_4, L_EN_GPIO_Port, L_EN_Pin, R_EN_GPIO_Port, R_EN_Pin);
-  if (HAL_CAN_Start(&hcan) != HAL_OK)
-  {
-	  Error_Handler();
-  }
-  HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
-//  printf("Actuator\n");
 
+  startEncoder();
+  motorInit(&motor1, &htim1, TIM_CHANNEL_1, TIM_CHANNEL_4, L_EN_GPIO_Port, L_EN_Pin, R_EN_GPIO_Port, R_EN_Pin);
   startMotor(&motor1);
+  initServo();
+//  printf("Actuator\n");
+  int refSpeed = 30;
+  int refSpeedChangeMode = 0;
   uint8_t PWM = 0;
   float outPID = 0;
-//  initServo();
-  //  Monitor_Show();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
     while (1)
     {
-//    	if (CANDataRcvFlag == 1)
-//    	{
-//    		CANDataRcvFlag = 0;
-//    		CANResponse();
-//    	}
-
-//    	CANTransmit();
-//    	HAL_Delay(50);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    	if(timeCountTest >= 10000)
+    	if(timeCountTest < 3000)
     	{
-    		if( refvelo >= 60)
-    		{
-    			refvelo = 30;
-    		}
-    		else
-    		{
-    			refvelo+=5;
-    		}
+    		setAngle(10);
+    	}
+    	else if (timeCountTest >= 3000 && timeCountTest < 6000)
+    	{
+    		setAngle(80);
+    	}
+
+    	else if(timeCountTest >= 10000)
+    	{
+    		setAngle(45);
+    		if(refSpeed >= 60) refSpeedChangeMode = 0;
+    		else if (refSpeed <= 30) refSpeedChangeMode = 1;
+
+    		if(refSpeedChangeMode) refSpeed += 5;
+    		else refSpeed -= 5;
+
     		timeCountTest = 0;
     	}
+
     	updateEncoder();
-    	outPID = PID(refvelo, encoderInfo.speed);
-    	PWM = velocityToPWM(outPID);
+    	outPID = PID(refSpeed, encoderInfo.speed);
+    	PWM = speedToPWM(outPID);
     	goForward(&motor1, PWM);
-    	printf("\ns %.01f", encoderInfo.speed);
-    	printf("\no %.01f", outPID);
-    	printf("\nr %d\n", refvelo);
-    	HAL_Delay(100);
+
+    	if(isPrint)
+    	{
+    		printf("\ns %.01f", encoderInfo.speed);
+    	    printf("\no %.01f", outPID);
+    	    printf("\nr %d\n", refSpeed);
+    	    isPrint = false;
+    	}
+
+//    	HAL_Delay(100);
     }
   /* USER CODE END 3 */
 }

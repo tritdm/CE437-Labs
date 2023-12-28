@@ -9,7 +9,23 @@
 #define INC_PID_H_
 
 #include "main.h"
+typedef struct{
+	float kp; // = 2.2;
+	float ki; // = 0.18;
+	float kd; // = 0.003;
 
-float PID(float refVel, float currVel);
+	float errorIntergral;
+	float prevError;
+	float error;
+
+	float currT;
+	float prevT;
+	float deltaT;
+
+	float outputPID;
+
+	int timeCountPID;
+} PIDInfor;
+float PID(float refSpeed, float currSpeed);
 
 #endif /* INC_PID_H_ */

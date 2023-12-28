@@ -4,6 +4,23 @@ void initServo()
 {
 	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
 }
+// Hàm chuyển đổi từ khoảng [0, 90] sang [99, 249]
+uint8_t convertToPWM(uint8_t angle) {
+    if (angle <= 90) {
+        return (uint8_t)((angle * (249 - 99)) / 90 + 99);
+    } else {
+        return 249;
+    }
+}
+
+// Hàm chuyển đổi ngược lại từ [99, 249] sang [0, 90]
+uint8_t convertToAngle(uint8_t pwm) {
+    if (pwm >= 99 && pwm <= 249) {
+        return (uint8_t)((90 * (pwm - 99)) / (249 - 99));
+    } else {
+        return 0;
+    }
+}
 void setAngle(uint8_t Angle)
 {
 	if (Angle < 0)
@@ -15,11 +32,9 @@ void setAngle(uint8_t Angle)
 		Angle = 90;
 	}
 
-	// Ánh xạ giá trị từ khoảng 0-90 sang khoảng 99-249
-	uint8_t  output = 99 + (Angle * (249 - 99)) / 90;
-	htim4.Instance->CCR1 = output;
+	htim4.Instance->CCR1 = convertToPWM(Angle);;
 }
-uint16_t getAngle()
+uint8_t getAngle()
 {
-	return htim4.Instance->CCR1;
+	return convertToAngle(htim4.Instance->CCR1);
 }

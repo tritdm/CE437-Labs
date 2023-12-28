@@ -5,5 +5,5 @@
 
 void initServo();
 void setAngle(uint8_t Angle);
-uint16_t getAngle();
+uint8_t getAngle();
 #endif /* __SERVO_H__ */
