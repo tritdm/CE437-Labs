@@ -130,21 +130,27 @@ typedef struct{
   uint16_t ambientCnt;  //Ambient Counting Rate [mcps], uint16_t, fixpoint9.7
   uint16_t spadCnt;     //Effective SPAD return count,  uint16_t, fixpoint8.8
   uint8_t  rangeStatus; //Ranging status (0-15)
-} statInfo_t_VL53L0X;
+} statVL53L0X_t;
+
+typedef struct
+{
+	I2C_HandleTypeDef 	*ina219_i2c;
+	uint8_t				Address;
+} VL53L0X_t;
 
 
 //------------------------------------------------------------
 // API Functions
 //------------------------------------------------------------
 // configures chip i2c and lib for `new_addr` (8 bit, LSB=0)
-void setAddress_VL53L0X(uint8_t new_addr);
+void setAddress(uint8_t new_addr);
 // Returns the current I²C address.
-uint8_t getAddress_VL53L0X(void);
+uint8_t getAddress(void);
 
 // Iniitializes and configures the sensor. 
 // If the optional argument io_2v8 is 1, the sensor is configured for 2V8 mode (2.8 V I/O); 
 // if 0, the sensor is left in 1V8 mode. Returns 1 if the initialization completed successfully.
-uint8_t initVL53L0X(bool io_2v8, I2C_HandleTypeDef *handler);
+uint8_t initVL53L0X(uint8_t io_2v8);
 
 // Sets the return signal rate limit to the given value in units of MCPS (mega counts per second). 
 // This is the minimum amplitude of the signal reflected from the target and received by the sensor 
@@ -191,11 +197,11 @@ void stopContinuous(void);
 
 // Returns a range reading in millimeters when continuous mode is active.
 // Additional measurement data will be copied into `extraStats` if it is non-zero.
-uint16_t readRangeContinuousMillimeters( statInfo_t_VL53L0X *extraStats );
+uint16_t readRangeContinuousMillimeters( statVL53L0X_t *extraStats );
 
 // Performs a single-shot ranging measurement and returns the reading in millimeters.
 // Additional measurement data will be copied into `extraStats` if it is non-zero.
-uint16_t readRangeSingleMillimeters( statInfo_t_VL53L0X *extraStats );
+uint16_t readRangeSingleMillimeters( statVL53L0X_t *extraStats );
 
 // Sets a timeout period in milliseconds after which read operations will abort 
 // if the sensor is not ready. A value of 0 disables the timeout.

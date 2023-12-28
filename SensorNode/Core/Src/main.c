@@ -136,8 +136,9 @@ int main(void)
 //  HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
 
 
-	statInfo_t_VL53L0X distanceStr;
-	if (initVL53L0X(1, &hi2c1))
+  statVL53L0X_t distanceStr;
+//	initVL53L0X(1);
+	if (initVL53L0X(1))
 	{
 		HAL_GPIO_WritePin(LEDG_GPIO_Port, LEDG_Pin, GPIO_PIN_RESET);
 		HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, GPIO_PIN_RESET);
@@ -145,9 +146,10 @@ int main(void)
 		printf("Success!\n");
 	}
 
-	HAL_GPIO_WritePin(LEDG_GPIO_Port, LEDG_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(LEDB_GPIO_Port, LEDB_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(LEDG_GPIO_Port, LEDG_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(LEDB_GPIO_Port, LEDB_Pin, GPIO_PIN_SET);
+	printf("Failed!\n");
 
 	// Configure the sensor for high accuracy and speed in 20 cm.
 	setSignalRateLimit(200);
@@ -156,13 +158,17 @@ int main(void)
 	setMeasurementTimingBudget(300 * 1000UL);
 
 	uint16_t distance;
-	printf("Failed!\n");
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  HAL_GPIO_TogglePin(GPIOB, LEDG_Pin);
+	  HAL_GPIO_TogglePin(GPIOB, LEDB_Pin);
+	  HAL_GPIO_TogglePin(GPIOB, LEDR_Pin);
+	  HAL_Delay(500);
 //	CANTransmit();
 //	HAL_Delay(50);
 //	if (CANDataRcvFlag == 1)
@@ -178,13 +184,14 @@ int main(void)
 //		}
 //
 //	}
+	  distance = readRangeSingleMillimeters(&distanceStr);
+
+	printf("Distance: %d\n", distance);
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	distance = readRangeSingleMillimeters(&distanceStr);
 
-	printf("Distance: %d\r\n", distance);
   }
   /* USER CODE END 3 */
 }
