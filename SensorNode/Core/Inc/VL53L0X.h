@@ -14,10 +14,8 @@
 //------------------------------------------------------------
 // I use a 8-bit number for the address, LSB must be 0 so that I can
 // OR over the last bit correctly based on reads and writes
-#define ADDRESS_DEFAULT 0b01010010
+#define ADDRESS_DEFAULT 0x52
 
-#define ADDRESS_Sensor0 0x30
-#define ADDRESS_Sensor1 0x31
 // Record the current time to check an upcoming timeout against
 #define startTimeout() (g_timeoutStartMs = HAL_GetTick())
 
@@ -37,6 +35,7 @@
 // based on VL53L0X_calc_macro_period_ps()
 // PLL_period_ps = 1655; macro_period_vclks = 2304
 #define calcMacroPeriod(vcsel_period_pclks) ((((uint32_t)2304 * (vcsel_period_pclks) * 1655) + 500) / 1000)
+
 // register addresses from API vl53l0x_device.h (ordered as listed there)
 enum regAddr {
   SYSRANGE_START                              = 0x00,
@@ -222,8 +221,6 @@ void writeMulti(uint8_t reg, uint8_t const *src, uint8_t count);
 // Read `count` number of bytes from the sensor, starting at `reg`, to `dst`
 void readMulti(uint8_t reg, uint8_t *dst, uint8_t count);
 
-
-bool initDuelSensors(I2C_HandleTypeDef *handler, uint8_t address0, uint8_t address1);
 // TCC: Target CentreCheck
 // MSRC: Minimum Signal Rate Check
 // DSS: Dynamic Spad Selection

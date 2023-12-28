@@ -72,6 +72,10 @@ void HAL_MspInit(void)
 
   /* System interrupt init*/
 
+  /** DISABLE: JTAG-DP Disabled and SW-DP Disabled
+  */
+  __HAL_AFIO_REMAP_SWJ_DISABLE();
+
   /* USER CODE BEGIN MspInit 1 */
 
   /* USER CODE END MspInit 1 */
@@ -96,11 +100,11 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 
     __HAL_RCC_GPIOA_CLK_ENABLE();
     /**ADC1 GPIO Configuration
-    PA4     ------> ADC1_IN4
+    PA0-WKUP     ------> ADC1_IN0
     */
-    GPIO_InitStruct.Pin = ADC_TEMPT_Pin;
+    GPIO_InitStruct.Pin = ADC_TEMP_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-    HAL_GPIO_Init(ADC_TEMPT_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(ADC_TEMP_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN ADC1_MspInit 1 */
 
@@ -126,9 +130,9 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
     __HAL_RCC_ADC1_CLK_DISABLE();
 
     /**ADC1 GPIO Configuration
-    PA4     ------> ADC1_IN4
+    PA0-WKUP     ------> ADC1_IN0
     */
-    HAL_GPIO_DeInit(ADC_TEMPT_GPIO_Port, ADC_TEMPT_Pin);
+    HAL_GPIO_DeInit(ADC_TEMP_GPIO_Port, ADC_TEMP_Pin);
 
   /* USER CODE BEGIN ADC1_MspDeInit 1 */
 

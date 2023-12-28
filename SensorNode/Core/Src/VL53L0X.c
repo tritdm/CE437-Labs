@@ -4,7 +4,8 @@
 // VL53L0X datasheet.
 
 #include <stdint.h>
-#include "main.h"
+//
+#include "stm32f1xx_hal.h" // Change it for your requirements.
 #include "string.h"
 #include "VL53L0X.h"
 
@@ -1020,36 +1021,4 @@ bool performSingleRefCalibration(uint8_t vhv_init_byte)
   writeReg(SYSRANGE_START, 0x00);
 
   return true;
-}
-
-bool initDuelSensors(I2C_HandleTypeDef *handler, uint8_t address0, uint8_t address1)
-{
-	//All reset
-	HAL_GPIO_WritePin(XSHUT_MCU1_1_GPIO_Port, XSHUT_MCU1_1_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(XSHUT_MCU1_0_GPIO_Port, XSHUT_MCU1_0_Pin, GPIO_PIN_RESET);
-	HAL_Delay(10);
-	//All set
-	HAL_GPIO_WritePin(XSHUT_MCU1_1_GPIO_Port, XSHUT_MCU1_1_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(XSHUT_MCU1_0_GPIO_Port, XSHUT_MCU1_0_Pin, GPIO_PIN_SET);
-	HAL_Delay(10);
-
-	// activating LOX0 and reseting LOX1
-	HAL_GPIO_WritePin(XSHUT_MCU1_1_GPIO_Port, XSHUT_MCU1_1_Pin, GPIO_PIN_RESET);
-	HAL_GPIO_WritePin(XSHUT_MCU1_0_GPIO_Port, XSHUT_MCU1_0_Pin, GPIO_PIN_SET);
-	if(!initVL53L0X(1, handler))
-	{
-		return false;
-	}
-	setAddress_VL53L0X(address0);
-
-	// activating LOX0 and reseting LOX1
-	HAL_GPIO_WritePin(XSHUT_MCU1_1_GPIO_Port, XSHUT_MCU1_1_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(XSHUT_MCU1_0_GPIO_Port, XSHUT_MCU1_0_Pin, GPIO_PIN_RESET);
-	if(!initVL53L0X(1, handler))
-	{
-		return false;
-	}
-	setAddress_VL53L0X(address1);
-
-	return true;
 }

@@ -129,24 +129,26 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  if (HAL_CAN_Start(&hcan) != HAL_OK)
-  {
-	  Error_Handler();
-  }
-  HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
-
-
-  //init 2 VL53L0X sensors
-//  if(!initDuelSensors(&hi2c1, ADDRESS_Sensor0, ADDRESS_Sensor1))
+//  if (HAL_CAN_Start(&hcan) != HAL_OK)
 //  {
 //	  Error_Handler();
 //  }
+//  HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
+
 
 	statInfo_t_VL53L0X distanceStr;
-	initVL53L0X(1, &hi2c1);
+	if (initVL53L0X(1, &hi2c1))
+	{
+		HAL_GPIO_WritePin(LEDG_GPIO_Port, LEDG_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(LEDB_GPIO_Port, LEDB_Pin, GPIO_PIN_RESET);
+		printf("Success!\n");
+	}
+
 	HAL_GPIO_WritePin(LEDG_GPIO_Port, LEDG_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LEDB_GPIO_Port, LEDB_Pin, GPIO_PIN_RESET);
+
 	// Configure the sensor for high accuracy and speed in 20 cm.
 	setSignalRateLimit(200);
 	setVcselPulsePeriod(VcselPeriodPreRange, 10);
@@ -154,7 +156,7 @@ int main(void)
 	setMeasurementTimingBudget(300 * 1000UL);
 
 	uint16_t distance;
-  printf("Sensor\n");
+	printf("Failed!\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -176,12 +178,11 @@ int main(void)
 //		}
 //
 //	}
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
 	distance = readRangeSingleMillimeters(&distanceStr);
-
-	//sprintf(msgBuffer, "Distance: %d\r\n", distance);
 
 	printf("Distance: %d\r\n", distance);
   }
@@ -268,7 +269,7 @@ static void MX_ADC1_Init(void)
 
   /** Configure Regular Channel
   */
-  sConfig.Channel = ADC_CHANNEL_4;
+  sConfig.Channel = ADC_CHANNEL_0;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
@@ -452,13 +453,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(XSHUT_MCU1_0_GPIO_Port, XSHUT_MCU1_0_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LEDB_Pin|LEDG_Pin|LEDR_Pin|GPIO_PIN_3, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, LEDB_Pin|LEDG_Pin|LEDR_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, MPU_BOOT_Pin|MPU_RST_Pin|XSHUT_MCU1_1_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : GPIO1_MCU1_0_Pin */
   GPIO_InitStruct.Pin = GPIO1_MCU1_0_Pin;
@@ -480,9 +478,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : LEDB_Pin LEDG_Pin LEDR_Pin MPU_BOOT_Pin
-                           MPU_RST_Pin PB3 XSHUT_MCU1_1_Pin */
+                           MPU_RST_Pin XSHUT_MCU1_1_Pin */
   GPIO_InitStruct.Pin = LEDB_Pin|LEDG_Pin|LEDR_Pin|MPU_BOOT_Pin
-                          |MPU_RST_Pin|GPIO_PIN_3|XSHUT_MCU1_1_Pin;
+                          |MPU_RST_Pin|XSHUT_MCU1_1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -493,13 +491,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : SPI_CS_Pin */
-  GPIO_InitStruct.Pin = SPI_CS_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(SPI_CS_GPIO_Port, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
