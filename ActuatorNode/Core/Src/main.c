@@ -214,26 +214,26 @@ int main(void)
 						case(CONTROL_DIR_FORWARD):
 						{
 							backward = 0;
-							angle = 45;
+							angle = 60;
 							break;
 						}
 						case(CONTROL_DIR_LEFT):
 						{
 							backward = 0;
-							angle = 0;
+							angle = 90;
 							break;
 						}
 						case(CONTROL_DIR_RIGHT):
 						{
 							backward = 0;
-							angle = 90;
+							angle = 50;
 							break;
 						}
 						case(CONTROL_DIR_STOP):
 						{
 							backward = 0;
 							des_speed = 0;
-							angle = 45;
+							angle = 60;
 							break;
 						}
 						default:

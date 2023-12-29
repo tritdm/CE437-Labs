@@ -161,70 +161,70 @@ int main(void)
 			HAL_GPIO_TogglePin(GPIO_Port, LEDG_Pin);
 			HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
 //			  CANResponseCheck();
-//			  if (timeElapsed >= 5000)
-//			  {
-//				  timeElapsed = 0;
+			  if (timeElapsed >= 5000)
+			  {
+				  timeElapsed = 0;
+				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
+//				  if (CANTxData.speed >= 50 || CANTxData.speed <= 30)
+//				  {
+//					  dif = -dif;
+//				  }
+				  CANTxData.speed 		= CANTxData.speed + dif;
+				  CANTxData.direction 	= ((CANTxData.direction + 1) % 5);
+			  }
+//			if (timeElapsed >= 5000)
+//			{
+//				step = (step + 1)%5;
+//			}
+////			  if (left_dis >= forward_threshold && right_dis >= forward_threshold)
+//			if (step == 0)
+//			{
 //				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
-////				  if (CANTxData.speed >= 50 || CANTxData.speed <= 30)
-////				  {
-////					  dif = -dif;
-////				  }
-//				  CANTxData.speed 		= CANTxData.speed + dif;
-//				  CANTxData.direction 	= ((CANTxData.direction + 1) % 5);
+//				  CANTxData.speed 		= CAN_SPEED_NORMAL;
+//				  CANTxData.direction 	= CONTROL_DIR_FORWARD;
 //			  }
-			if (timeElapsed >= 5000)
-			{
-				step = (step + 1)%5;
-			}
-//			  if (left_dis >= forward_threshold && right_dis >= forward_threshold)
-			if (step == 0)
-			{
-				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
-				  CANTxData.speed 		= CAN_SPEED_NORMAL;
-				  CANTxData.direction 	= CONTROL_DIR_FORWARD;
-			  }
-//			  else if (left_dis < forward_threshold && right_dis < forward_threshold)
-			else if (step == 3 || step ==4)
-			{
-//			  	  if (left_dis < turn_threshold || right_dis < turn_threshold)
-			  	if (step == 3)
-				{
-			  		CANTxData.priority 		= CONTROL_PRIOR_NORMAL;
-				  	CANTxData.speed 		= CAN_SPEED_NORMAL;
-				  	CANTxData.direction 	= CONTROL_DIR_STOP;
-			  	  }
-//			  	  else
-			  	else
-			  	  {
-	 			  	  if (cur_speed > 10)
-				  	  {
-					  	CANTxData.priority 		= CONTROL_PRIOR_NORMAL;
-					  	CANTxData.speed 		= CAN_SPEED_MIN;
-					  	CANTxData.direction 	= CONTROL_DIR_FORWARD;
-				  	  }
-				  	  else
-				  	  {
-					  	CANTxData.priority 		= CONTROL_PRIOR_NORMAL;
-					  	CANTxData.speed 		= CAN_SPEED_NORMAL;
-					  	CANTxData.direction 	= CONTROL_DIR_LEFT;
-				  	  }
-			  	  }
-
-			  }
-			else if (step == 1)
-//			  else if (left_dis > right_dis)
-			  {
-				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
-				  CANTxData.speed 		= CAN_SPEED_NORMAL;
-				  CANTxData.direction 	= CONTROL_DIR_RIGHT;
-			  }
-			else if (step == 2)
-//			  else if (left_dis < right_dis)
-			  {
-				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
-				  CANTxData.speed 		= CAN_SPEED_NORMAL;
-				  CANTxData.direction 	= CONTROL_DIR_LEFT;
-			  }
+////			  else if (left_dis < forward_threshold && right_dis < forward_threshold)
+//			else if (step == 3 || step ==4)
+//			{
+////			  	  if (left_dis < turn_threshold || right_dis < turn_threshold)
+//			  	if (step == 3)
+//				{
+//			  		CANTxData.priority 		= CONTROL_PRIOR_NORMAL;
+//				  	CANTxData.speed 		= CAN_SPEED_NORMAL;
+//				  	CANTxData.direction 	= CONTROL_DIR_STOP;
+//			  	  }
+////			  	  else
+//			  	else
+//			  	  {
+//	 			  	  if (cur_speed > 10)
+//				  	  {
+//					  	CANTxData.priority 		= CONTROL_PRIOR_NORMAL;
+//					  	CANTxData.speed 		= CAN_SPEED_MIN;
+//					  	CANTxData.direction 	= CONTROL_DIR_FORWARD;
+//				  	  }
+//				  	  else
+//				  	  {
+//					  	CANTxData.priority 		= CONTROL_PRIOR_NORMAL;
+//					  	CANTxData.speed 		= CAN_SPEED_NORMAL;
+//					  	CANTxData.direction 	= CONTROL_DIR_LEFT;
+//				  	  }
+//			  	  }
+//
+//			  }
+//			else if (step == 1)
+////			  else if (left_dis > right_dis)
+//			  {
+//				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
+//				  CANTxData.speed 		= CAN_SPEED_NORMAL;
+//				  CANTxData.direction 	= CONTROL_DIR_RIGHT;
+//			  }
+//			else if (step == 2)
+////			  else if (left_dis < right_dis)
+//			  {
+//				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
+//				  CANTxData.speed 		= CAN_SPEED_NORMAL;
+//				  CANTxData.direction 	= CONTROL_DIR_LEFT;
+//			  }
 		  }
 	  }
 	  CANSensorTransmit(&hcan, &CANTxData);
