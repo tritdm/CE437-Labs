@@ -143,14 +143,14 @@ typedef struct
 // API Functions
 //------------------------------------------------------------
 // configures chip i2c and lib for `new_addr` (8 bit, LSB=0)
-void setAddress(uint8_t new_addr);
+uint8_t setAddress(uint8_t new_addr);
 // Returns the current I²C address.
 uint8_t getAddress(void);
 
 // Iniitializes and configures the sensor. 
 // If the optional argument io_2v8 is 1, the sensor is configured for 2V8 mode (2.8 V I/O); 
 // if 0, the sensor is left in 1V8 mode. Returns 1 if the initialization completed successfully.
-uint8_t initVL53L0X(uint8_t io_2v8);
+uint8_t initVL53L0X(uint8_t io_2v8, uint8_t addr, I2C_HandleTypeDef *handler);
 
 // Sets the return signal rate limit to the given value in units of MCPS (mega counts per second). 
 // This is the minimum amplitude of the signal reflected from the target and received by the sensor 

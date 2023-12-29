@@ -1,20 +1,20 @@
 /* USER CODE BEGIN Header */
 /**
-  ******************************************************************************
-  * @file           : main.c
-  * @brief          : Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Copyright (c) 2023 STMicroelectronics.
-  * All rights reserved.
-  *
-  * This software is licensed under terms that can be found in the LICENSE file
-  * in the root directory of this software component.
-  * If no LICENSE file comes with this software, it is provided AS-IS.
-  *
-  ******************************************************************************
-  */
+ ******************************************************************************
+ * @file           : main.c
+ * @brief          : Main program body
+ ******************************************************************************
+ * @attention
+ *
+ * Copyright (c) 2023 STMicroelectronics.
+ * All rights reserved.
+ *
+ * This software is licensed under terms that can be found in the LICENSE file
+ * in the root directory of this software component.
+ * If no LICENSE file comes with this software, it is provided AS-IS.
+ *
+ ******************************************************************************
+ */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -81,17 +81,17 @@ static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN 0 */
 void CANTransmit()
 {
-	CANTxHeader.StdId 	= CAN_TX_STD_ID;
-	CANTxHeader.IDE 	= CAN_ID_STD;
-	CANTxHeader.RTR 	= CAN_RTR_DATA;
-	CANTxHeader.DLC 	= CAN_DATA_LENGTH;
+  CANTxHeader.StdId = CAN_TX_STD_ID;
+  CANTxHeader.IDE = CAN_ID_STD;
+  CANTxHeader.RTR = CAN_RTR_DATA;
+  CANTxHeader.DLC = CAN_DATA_LENGTH;
 
-	CANTxBuffer[7] 		= (CANTxBuffer[7] + 1)%255;
+  CANTxBuffer[7] = (CANTxBuffer[7] + 1) % 255;
 
-	if (HAL_CAN_AddTxMessage(&hcan, &CANTxHeader, CANTxBuffer, &CANTxMailboxes) == HAL_OK)
-	{
-		HAL_GPIO_TogglePin(GPIO_Port, LEDR_Pin);
-	}
+  if (HAL_CAN_AddTxMessage(&hcan, &CANTxHeader, CANTxBuffer, &CANTxMailboxes) == HAL_OK)
+  {
+    HAL_GPIO_TogglePin(GPIO_Port, LEDR_Pin);
+  }
 }
 /* USER CODE END 0 */
 
@@ -129,35 +129,30 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-//  if (HAL_CAN_Start(&hcan) != HAL_OK)
-//  {
-//	  Error_Handler();
-//  }
-//  HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
-
+  //  if (HAL_CAN_Start(&hcan) != HAL_OK)
+  //  {
+  //	  Error_Handler();
+  //  }
+  //  HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
 
   statVL53L0X_t distanceStr;
-//	initVL53L0X(1);
-	if (initVL53L0X(1))
-	{
-		HAL_GPIO_WritePin(LEDG_GPIO_Port, LEDG_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LEDB_GPIO_Port, LEDB_Pin, GPIO_PIN_RESET);
-		printf("Success!\n");
-	}
+  //	initVL53L0X(1);
+  while (!initVL53L0X(1, ADDRESS_DEFAULT, &hi2c1))
+  {
+    HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, GPIO_PIN_RESET); //on led
+    printf("Failed!\n");
+  }
+  HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, GPIO_PIN_SET); //off led
+  HAL_GPIO_WritePin(GPIOC, LedOnBoard_Pin, GPIO_PIN_RESET);
+  uint8_t curAddr = getAddress();
 
-	HAL_GPIO_WritePin(LEDG_GPIO_Port, LEDG_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(LEDB_GPIO_Port, LEDB_Pin, GPIO_PIN_SET);
-	printf("Failed!\n");
+  // Configure the sensor for high accuracy and speed in 20 cm.
+  setSignalRateLimit(0.25);
+  setVcselPulsePeriod(VcselPeriodPreRange, 10);
+  setVcselPulsePeriod(VcselPeriodFinalRange, 14);
+  setMeasurementTimingBudget(33 * 1000UL);
 
-	// Configure the sensor for high accuracy and speed in 20 cm.
-	setSignalRateLimit(200);
-	setVcselPulsePeriod(VcselPeriodPreRange, 10);
-	setVcselPulsePeriod(VcselPeriodFinalRange, 14);
-	setMeasurementTimingBudget(300 * 1000UL);
-
-	uint16_t distance;
+  uint16_t distance;
 
   /* USER CODE END 2 */
 
@@ -165,33 +160,31 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  HAL_GPIO_TogglePin(GPIOB, LEDG_Pin);
-	  HAL_GPIO_TogglePin(GPIOB, LEDB_Pin);
-	  HAL_GPIO_TogglePin(GPIOB, LEDR_Pin);
-	  HAL_Delay(500);
-//	CANTransmit();
-//	HAL_Delay(50);
-//	if (CANDataRcvFlag == 1)
-//	{
-//		CANDataRcvFlag = 0;
-//		if ((CANRxBuffer[0] == CANTxBuffer[0]) && (CANRxBuffer[1] == CANTxBuffer[1]))
-//		{
-//			if (CANRxBuffer[2] == CANRxBuffer[0] + CANRxBuffer[1])
-//			{
-//				HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
-//				if (CANRxBuffer[7]);
-//			}
-//		}
-//
-//	}
-	  distance = readRangeSingleMillimeters(&distanceStr);
-
-	printf("Distance: %d\n", distance);
+    HAL_GPIO_TogglePin(GPIOB, LEDG_Pin);
+//    HAL_GPIO_TogglePin(GPIOB, LEDB_Pin);
+    HAL_Delay(500);
+    //	CANTransmit();
+    //	HAL_Delay(50);
+    //	if (CANDataRcvFlag == 1)
+    //	{
+    //		CANDataRcvFlag = 0;
+    //		if ((CANRxBuffer[0] == CANTxBuffer[0]) && (CANRxBuffer[1] == CANTxBuffer[1]))
+    //		{
+    //			if (CANRxBuffer[2] == CANRxBuffer[0] + CANRxBuffer[1])
+    //			{
+    //				HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
+    //				if (CANRxBuffer[7]);
+    //			}
+    //		}
+    //
+    //	}
+    distance = readRangeContinuousMillimeters(&distanceStr);
+    printf("\nAddr: %u\n", curAddr);
+    printf("\nDistance: %d\n", distance);
 
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
   }
   /* USER CODE END 3 */
 }
@@ -324,15 +317,15 @@ static void MX_CAN_Init(void)
   CAN_FilterTypeDef canfilterconfig;
 
   canfilterconfig.FilterActivation = CAN_FILTER_ENABLE;
-  canfilterconfig.FilterBank = 12;  // which filter bank to use from the assigned ones
+  canfilterconfig.FilterBank = 12; // which filter bank to use from the assigned ones
   canfilterconfig.FilterFIFOAssignment = CAN_FILTER_FIFO1;
-  canfilterconfig.FilterIdHigh = 0x012<<5;
+  canfilterconfig.FilterIdHigh = 0x012 << 5;
   canfilterconfig.FilterIdLow = 0;
-  canfilterconfig.FilterMaskIdHigh = 0x012<<5;
+  canfilterconfig.FilterMaskIdHigh = 0x012 << 5;
   canfilterconfig.FilterMaskIdLow = 0x0000;
   canfilterconfig.FilterMode = CAN_FILTERMODE_IDMASK;
   canfilterconfig.FilterScale = CAN_FILTERSCALE_32BIT;
-  canfilterconfig.SlaveStartFilterBank = 13;  // how many filters to assign to the CAN1 (master can)
+  canfilterconfig.SlaveStartFilterBank = 13; // how many filters to assign to the CAN1 (master can)
 
   HAL_CAN_ConfigFilter(&hcan, &canfilterconfig);
   /* USER CODE END CAN_Init 2 */
@@ -457,26 +450,26 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(XSHUT_MCU1_0_GPIO_Port, XSHUT_MCU1_0_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, LedOnBoard_Pin|XSHUT_MCU1_0_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LEDB_Pin|LEDG_Pin|LEDR_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, LEDB_Pin|LEDG_Pin|LEDR_Pin|XSHUT_MCU1_1_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, MPU_BOOT_Pin|MPU_RST_Pin|XSHUT_MCU1_1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, MPU_BOOT_Pin|MPU_RST_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : LedOnBoard_Pin XSHUT_MCU1_0_Pin */
+  GPIO_InitStruct.Pin = LedOnBoard_Pin|XSHUT_MCU1_0_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : GPIO1_MCU1_0_Pin */
   GPIO_InitStruct.Pin = GPIO1_MCU1_0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIO1_MCU1_0_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : XSHUT_MCU1_0_Pin */
-  GPIO_InitStruct.Pin = XSHUT_MCU1_0_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(XSHUT_MCU1_0_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : BTN2_Pin BTN1_Pin */
   GPIO_InitStruct.Pin = BTN2_Pin|BTN1_Pin;
@@ -518,8 +511,8 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
-	  HAL_GPIO_TogglePin(LEDG_GPIO_Port, LEDG_Pin);
-	  HAL_Delay(200);
+    HAL_GPIO_TogglePin(LEDG_GPIO_Port, LEDG_Pin);
+    HAL_Delay(200);
   }
   /* USER CODE END Error_Handler_Debug */
 }

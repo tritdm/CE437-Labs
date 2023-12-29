@@ -45,7 +45,7 @@ static uint32_t timeoutMicrosecondsToMclks(uint32_t timeout_period_us, uint8_t v
 void writeReg(uint8_t reg, uint8_t value) {
 
   uint8_t msg = value; // Assign the value to the buffer.
-  i2cStat = HAL_I2C_Mem_Write(&VL53L0X_I2C_Handler, (g_i2cAddr << 1 | I2C_WRITE), reg, 1, &msg, 1, I2C_TIMEOUT);
+  i2cStat = HAL_I2C_Mem_Write(&VL53L0X_I2C_Handler, (g_i2cAddr | I2C_WRITE), reg, 1, &msg, 1, I2C_TIMEOUT);
 }
 
 // Write a 16-bit register
@@ -54,7 +54,7 @@ void writeReg16Bit(uint8_t reg, uint16_t value){
   uint8_t msg[2];
   msg[0] = (value >> 8) & 0xff;
   msg[1] = value & 0xff;
-  i2cStat = HAL_I2C_Mem_Write(&VL53L0X_I2C_Handler, (g_i2cAddr << 1 | I2C_WRITE), reg, 1, (uint8_t*)msg, 2, I2C_TIMEOUT);
+  i2cStat = HAL_I2C_Mem_Write(&VL53L0X_I2C_Handler, (g_i2cAddr | I2C_WRITE), reg, 1, (uint8_t*)msg, 2, I2C_TIMEOUT);
 }
 
 // Write a 32-bit register
@@ -65,14 +65,14 @@ void writeReg32Bit(uint8_t reg, uint32_t value){
 	msg[1] = (value >> 16) & 0xff;
 	msg[2] = (value >> 8) & 0xff;
 	msg[3] = value & 0xff;
-  i2cStat = HAL_I2C_Mem_Write(&VL53L0X_I2C_Handler, (g_i2cAddr << 1 | I2C_WRITE), reg, 1, (uint8_t*)msg, 4, I2C_TIMEOUT);
+  i2cStat = HAL_I2C_Mem_Write(&VL53L0X_I2C_Handler, (g_i2cAddr | I2C_WRITE), reg, 1, (uint8_t*)msg, 4, I2C_TIMEOUT);
 }
 
 // Read an 8-bit register
 uint8_t readReg(uint8_t reg) {
   uint8_t value;
 
-  i2cStat = HAL_I2C_Mem_Read(&VL53L0X_I2C_Handler, (g_i2cAddr << 1 | I2C_READ), reg, 1, msgBuffer, 1, I2C_TIMEOUT);
+  i2cStat = HAL_I2C_Mem_Read(&VL53L0X_I2C_Handler, (g_i2cAddr | I2C_READ), reg, 1, msgBuffer, 1, I2C_TIMEOUT);
   value = msgBuffer[0];
 
   return value;
@@ -81,9 +81,9 @@ uint8_t readReg(uint8_t reg) {
 // Read a 16-bit register
 uint16_t readReg16Bit(uint8_t reg) {
   uint16_t value;
-
-  i2cStat = HAL_I2C_Mem_Read(&VL53L0X_I2C_Handler, (g_i2cAddr << 1 | I2C_READ), reg, 1, msgBuffer, 2, I2C_TIMEOUT);
-  value = ((msgBuffer[0] << 8) | msgBuffer[1]);
+  uint8_t msg[2];
+  i2cStat = HAL_I2C_Mem_Read(&VL53L0X_I2C_Handler, (g_i2cAddr | I2C_READ), reg, 1, msg, 2, I2C_TIMEOUT);
+  value = (uint16_t)((msg[0] << 8) | msg[1]);
 
   return value;
 }
@@ -91,8 +91,8 @@ uint16_t readReg16Bit(uint8_t reg) {
 // Read a 32-bit register
 uint32_t readReg32Bit(uint8_t reg) {
   uint32_t value;
-  i2cStat = HAL_I2C_Mem_Read(&VL53L0X_I2C_Handler, (g_i2cAddr << 1 | I2C_READ), reg, 1, msgBuffer, 4, I2C_TIMEOUT);
-  value = ((msgBuffer[0] << 24) | (msgBuffer[1] << 16) | (msgBuffer[2] << 8) | msgBuffer[3]);
+  i2cStat = HAL_I2C_Mem_Read(&VL53L0X_I2C_Handler, (g_i2cAddr | I2C_READ), reg, 1, msgBuffer, 4, I2C_TIMEOUT);
+  value = (uint32_t)((msgBuffer[0] << 24) | (msgBuffer[1] << 16) | (msgBuffer[2] << 8) | msgBuffer[3]);
 
   return value;
 }
@@ -100,27 +100,40 @@ uint32_t readReg32Bit(uint8_t reg) {
 // Write an arbitrary number of bytes from the given array to the sensor,
 // starting at the given register
 void writeMulti(uint8_t reg, uint8_t const *src, uint8_t count){
-
-  memcpy(msgBuffer, src, count);
-  i2cStat = HAL_I2C_Mem_Write(&VL53L0X_I2C_Handler, g_i2cAddr | I2C_WRITE, reg, 1, msgBuffer, count, I2C_TIMEOUT);
+	uint8_t msg[count];
+	for (uint8_t i = 0; i < count; i++)
+	{
+		msg[i] = src[i];
+	}
+  i2cStat = HAL_I2C_Mem_Write(&VL53L0X_I2C_Handler, g_i2cAddr | I2C_WRITE, reg, 1, (uint8_t*)msg, count, I2C_TIMEOUT);
 }
 
 // Read an arbitrary number of bytes from the sensor, starting at the given
 // register, into the given array
 void readMulti(uint8_t reg, uint8_t * dst, uint8_t count) {
-
 	i2cStat = HAL_I2C_Mem_Read(&VL53L0X_I2C_Handler, g_i2cAddr | I2C_READ, reg, 1, dst, count, I2C_TIMEOUT);
 }
 
 
 // Public Methods //////////////////////////////////////////////////////////////
 
-void setAddress_VL53L0X(uint8_t new_addr) {
-  writeReg( I2C_SLAVE_DEVICE_ADDRESS, (new_addr) & 0x7F );
-  g_i2cAddr = new_addr;
+bool setAddress(uint8_t new_addr) {
+
+  if (new_addr != ADDRESS_DEFAULT)
+  {
+    writeReg(I2C_SLAVE_DEVICE_ADDRESS, (new_addr) & 0x7F);
+    if (i2cStat != HAL_OK)
+    {
+      return false;
+    }
+    g_i2cAddr = new_addr;
+    return true;
+  }
+
+  return true;
 }
 
-uint8_t getAddress_VL53L0X() {
+uint8_t getAddress() {
   return g_i2cAddr;
 }
 
@@ -132,15 +145,23 @@ uint8_t getAddress_VL53L0X() {
 // enough unless a cover glass is added.
 // If io_2v8 (optional) is true or not given, the sensor is configured for 2V8
 // mode.
-bool initVL53L0X( bool io_2v8 ){
+bool initVL53L0X( bool io_2v8, uint8_t addr, I2C_HandleTypeDef *handler){
   // VL53L0X_DataInit() begin
+
+  //Handler
+  memcpy(&VL53L0X_I2C_Handler, handler, sizeof(*handler));
+
+  // Reset the message buffer.
+  msgBuffer[0] = 0;
+  msgBuffer[1] = 0;
+  msgBuffer[2] = 0;
+  msgBuffer[3] = 0;
 
 	//check model ID reg
 	if (readReg(IDENTIFICATION_MODEL_ID) != 0xEE)
 	{
 		return false;
 	}
-
   // sensor uses 1V8 mode for I/O by default; switch to 2V8 mode if necessary
   if (io_2v8)
   {
@@ -354,6 +375,10 @@ bool initVL53L0X( bool io_2v8 ){
   writeReg(SYSTEM_SEQUENCE_CONFIG, 0xE8);
 
   // VL53L0X_PerformRefCalibration() end
+	if (!setAddress(addr))
+	{
+		return false;
+	}
 
   return true;
 }
@@ -784,6 +809,7 @@ uint16_t readRangeContinuousMillimeters( statVL53L0X_t *extraStats ) {
   uint8_t tempBuffer[12];
   uint16_t temp;
   startTimeout();
+  uint16_t status;
   while ((readReg(RESULT_INTERRUPT_STATUS) & 0x07) == 0) {
     if (checkTimeoutExpired())
     {
@@ -795,6 +821,13 @@ uint16_t readRangeContinuousMillimeters( statVL53L0X_t *extraStats ) {
     // assumptions: Linearity Corrective Gain is 1000 (default);
     // fractional ranging is not enabled
     temp = readReg16Bit(RESULT_RANGE_STATUS + 10);
+    if (i2cStat == HAL_OK)
+    {
+    	status = 1;
+    } else
+    {
+    	status = 404;
+    }
   } else {
     // Register map starting at 0x14
     //     0  1  2  3  4  5  6  7  8  9  A  B  C  D  E  F
@@ -808,6 +841,19 @@ uint16_t readRangeContinuousMillimeters( statVL53L0X_t *extraStats ) {
     // 9,8: AmbientRateRtnMegaCps  [mcps], uint16_t, fixpoimt9.7
     // A,B: uncorrected distance [mm], uint16_t
     readMulti(0x14, tempBuffer, 12);
+    if (i2cStat == HAL_OK)
+   {
+	status = 1;
+   } else if (i2cStat == HAL_ERROR)
+   {
+	status = 404;
+   } else if (i2cStat == HAL_BUSY)
+   {
+	   status = 405;
+   } else
+   {
+	   status = 406;
+   }
     extraStats->rangeStatus =  tempBuffer[0x00]>>3;
     extraStats->spadCnt     = (tempBuffer[0x02]<<8) | tempBuffer[0x03];
     extraStats->signalCnt   = (tempBuffer[0x06]<<8) | tempBuffer[0x07];
@@ -816,7 +862,7 @@ uint16_t readRangeContinuousMillimeters( statVL53L0X_t *extraStats ) {
     extraStats->rawDistance = temp;
   }
   writeReg(SYSTEM_INTERRUPT_CLEAR, 0x01);
-  return temp;
+  return status;
 }
 
 // Performs a single-shot range measurement and returns the reading in
