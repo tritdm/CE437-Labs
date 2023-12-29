@@ -17,14 +17,12 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "uart.h"
 #include "can_project_sensor.h"
-#include "VL53L0X.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,6 +48,8 @@ CAN_HandleTypeDef hcan;
 
 I2C_HandleTypeDef hi2c1;
 
+TIM_HandleTypeDef htim3;
+
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
@@ -65,11 +65,13 @@ extern uint8_t CANRxBuffer[];
 extern uint8_t CANDiagnosticResponseRcvFlag;
 extern CAN_RxHeaderTypeDef CANRxHeader;
 CANSensorData CANTxData = {.sequence = 0, .priority = CONTROL_PRIOR_NORMAL,
-							.speed = CAN_SPEED_NORMAL, .direction = CAN_DIRECTION_FORWARD};
+							.speed = CAN_SPEED_MIN, .direction = CAN_DIRECTION_FORWARD};
 uint8_t last_seq = 0, cur_seq;
 uint16_t left_dis = 0, right_dis = 0;
-const uint16_t threshold = 8192;
+const uint16_t threshold = 8000;
 extern uint8_t CANDataRcvFlag;
+extern uint32_t timeElapsed;
+uint8_t dif = 5, dif2 = 5;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -80,6 +82,7 @@ static void MX_CAN_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -122,7 +125,9 @@ int main(void)
   MX_I2C1_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+  HAL_TIM_Base_Start_IT(&htim3);
   if (HAL_CAN_Start(&hcan) != HAL_OK)
   {
 	  Error_Handler();
@@ -151,31 +156,46 @@ int main(void)
 		  }
 		  else
 		  {
-			  CANResponseCheck();
-			  if (left_dis == threshold && right_dis == threshold)
+//			  CANResponseCheck();
+			  if (timeElapsed >= 5000)
 			  {
+				  timeElapsed = 0;
 				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
-				  CANTxData.speed 		= CAN_SPEED_NORMAL;
-				  CANTxData.direction 	= CAN_DIRECTION_FORWARD;
+				  if (CANTxData.speed >= 45 || CANTxData.direction <= 30)
+				  {
+					  dif2 = -dif2;
+				  }
+				  CANTxData.speed 		= CANTxData.speed + dif2;
+				  if (CANTxData.direction >= 90 || CANTxData.direction <= 0)
+				  {
+					  dif = -dif;
+				  }
+				  CANTxData.direction 	= CANTxData.direction + dif;
 			  }
-			  else if (left_dis < threshold && right_dis <= threshold)
-			  {
-				  CANTxData.priority 	= CONTROL_PRIOR_URGENT;
-				  CANTxData.speed 		= CAN_SPEED_MIN;
-				  CANTxData.direction 	= CAN_DIRECTION_FORWARD;
-			  }
-			  else if (left_dis > right_dis)
-			  {
-				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
-				  CANTxData.speed 		= CAN_SPEED_NORMAL;
-				  CANTxData.direction 	= CAN_DIRECTION_FULL_RIGHT;
-			  }
-			  else if (left_dis < right_dis)
-			  {
-				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
-				  CANTxData.speed 		= CAN_SPEED_NORMAL;
-				  CANTxData.direction 	= CAN_DIRECTION_FULL_LEFT;
-			  }
+//			  if (left_dis >= threshold && right_dis >= threshold)
+//			  {
+//				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
+//				  CANTxData.speed 		= CAN_SPEED_NORMAL;
+//				  CANTxData.direction 	= CAN_DIRECTION_FORWARD;
+//			  }
+//			  else if (left_dis < threshold && right_dis < threshold)
+//			  {
+//				  CANTxData.priority 	= CONTROL_PRIOR_URGENT;
+//				  CANTxData.speed 		= CAN_SPEED_MIN;
+//				  CANTxData.direction 	= CAN_DIRECTION_FORWARD;
+//			  }
+//			  else if (left_dis > right_dis)
+//			  {
+//				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
+//				  CANTxData.speed 		= CAN_SPEED_NORMAL;
+//				  CANTxData.direction 	= CAN_DIRECTION_FULL_RIGHT;
+//			  }
+//			  else if (left_dis < right_dis)
+//			  {
+//				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
+//				  CANTxData.speed 		= CAN_SPEED_NORMAL;
+//				  CANTxData.direction 	= CAN_DIRECTION_FULL_LEFT;
+//			  }
 		  }
 	  }
 	  CANSensorTransmit(&hcan, &CANTxData);
@@ -360,6 +380,51 @@ static void MX_I2C1_Init(void)
   /* USER CODE BEGIN I2C1_Init 2 */
 
   /* USER CODE END I2C1_Init 2 */
+
+}
+
+/**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 35999;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 199;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
 
 }
 

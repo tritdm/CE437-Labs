@@ -22,7 +22,7 @@
 
 typedef enum
 {
-	CONTROL_PRIOR_URGENT = 0,
+	CONTROL_PROR_URGENT = 0,
 //	CONTROL_PRIOR
 	CONTROL_PRIOR_NORMAL = 2
 } CONTROL_PRIORITY;
@@ -34,5 +34,8 @@ typedef struct
 	uint8_t speed;
 	uint8_t direction;
 } CANSensorData;
+
+void CANSensorTransmit(CAN_HandleTypeDef *hcan, CANSensorData* controlData);
+void CANResponseCheck();
 
 #endif /* __CAN_PROJECT_H__ */

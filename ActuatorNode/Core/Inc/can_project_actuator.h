@@ -37,4 +37,6 @@ typedef struct
 	uint8_t speed;
 } CANActuatorData;
 
+void CANActuatorResponse(CAN_HandleTypeDef *hcan, CANActuatorData* responseData);
+
 #endif /* __CAN_PROJECT_H__ */
