@@ -87,12 +87,12 @@ void securityResponse()
 	if (securityAccessSeedGenerate(&hcan, &CANRxHeader, CANRxBuffer))
 	{
 		while (CANDiagnosticRequestRcvFlag != 1);
-
 		CANDiagnosticRequestRcvFlag = 0;
+		HAL_Delay(1000);
 		flowControlResponse(&hcan, &CANRxHeader, CANRxBuffer);
 		while (CANDiagnosticRequestRcvFlag != 1);
-
 		CANDiagnosticRequestRcvFlag = 0;
+		HAL_Delay(1000);
 		securityAccessKeyResponse(&hcan);
 	}
 }
@@ -140,7 +140,7 @@ int main(void)
 	  Error_Handler();
   }
   HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
-  printf("Actuator\n");
+//  printf("Actuator\n");
   //  Monitor_Show();
   /* USER CODE END 2 */
 
@@ -149,27 +149,22 @@ int main(void)
   while (1)
   {
 	while (CANDiagnosticRequestRcvFlag != 1);
+	CANDiagnosticRequestRcvFlag = 0;
+	HAL_Delay(2000);
+
+	if (securityAccessSeedGenerate(&hcan, &CANRxHeader, CANRxBuffer))
 	{
-//		HAL_Delay(1000);
+		while (CANDiagnosticRequestRcvFlag != 1);
 		CANDiagnosticRequestRcvFlag = 0;
-//    	readDataByIdentifierResponse(&hcan, &CANRxHeader, CANRxBuffer);
-//    	writeDataByIdentifierResponse(&hcan, &CANRxHeader, CANRxBuffer);
-		if (securityAccessSeedGenerate(&hcan, &CANRxHeader, CANRxBuffer))
-		{
-			while (CANDiagnosticRequestRcvFlag != 1);
-			{
-				CANDiagnosticRequestRcvFlag = 0;
-				flowControlResponse(&hcan, &CANRxHeader, CANRxBuffer);
-				while (CANDiagnosticRequestRcvFlag != 1);
-				{
-					CANDiagnosticRequestRcvFlag = 0;
-					securityAccessKeyResponse(&hcan);
-				}
-			}
-		}
+		HAL_Delay(1000);
+		flowControlResponse(&hcan, &CANRxHeader, CANRxBuffer);
+
+		while (CANDiagnosticRequestRcvFlag != 1);
+		CANDiagnosticRequestRcvFlag = 0;
+		HAL_Delay(1000);
+		securityAccessKeyResponse(&hcan);
 	}
- //    	CANTransmit();
- //    	HAL_Delay(50);
+
      /* USER CODE END WHILE */
 
      /* USER CODE BEGIN 3 */

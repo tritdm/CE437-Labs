@@ -55,9 +55,7 @@ uint8_t readDataByIdentifierResponse(CAN_HandleTypeDef *hcan, CAN_RxHeaderTypeDe
 
 	CAN_Transmit(hcan, &CANTxHeaderResponse, CANTxResponse, &CANTxMailboxesResponse);
 
-//	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDB_Pin);
-//	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDR_Pin);
-	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDG_Pin);
+	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 
 	return 1;
 }
@@ -102,7 +100,7 @@ uint8_t writeDataByIdentifierResponse(CAN_HandleTypeDef *hcan, CAN_RxHeaderTypeD
 
 	CAN_Transmit(hcan, &CANTxHeaderResponse, CANTxResponse, &CANTxMailboxesResponse);
 
-	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDG_Pin);
+	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 	return 1;
 }
 
@@ -273,6 +271,7 @@ uint8_t securityAccessKeyResponse(CAN_HandleTypeDef *hcan)
 
 	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDB_Pin);
 
+	HAL_Delay(1000);
 	CAN_Transmit(hcan, &CANTxHeaderResponse, CANTxResponse, &CANTxMailboxesResponse);
 
 	return 1;
