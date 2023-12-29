@@ -226,7 +226,7 @@ int main(void)
 						case(CONTROL_DIR_RIGHT):
 						{
 							backward = 0;
-							angle = 50;
+							angle = 15;
 							break;
 						}
 						case(CONTROL_DIR_STOP):
@@ -240,7 +240,7 @@ int main(void)
 						{
 							backward = 1;
 							des_speed = -des_speed;
-							angle = 45;
+							angle = 60;
 							break;
 						}
 					}
