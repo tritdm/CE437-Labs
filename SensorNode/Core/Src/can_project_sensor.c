@@ -36,8 +36,6 @@ void CANResponseCheck()
 
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
-	HAL_GPIO_TogglePin(GPIO_Port, LEDG_Pin);
-	HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
 	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &CANRxHeader, CANRxBuffer) != HAL_OK)
 	{
 		Error_Handler();

@@ -58,7 +58,7 @@
 extern CAN_HandleTypeDef hcan;
 extern TIM_HandleTypeDef htim3;
 /* USER CODE BEGIN EV */
-
+volatile uint32_t timeElapsed = 0;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -188,7 +188,7 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
   /* USER CODE BEGIN SysTick_IRQn 1 */
-
+  timeElapsed++;
   /* USER CODE END SysTick_IRQn 1 */
 }
 

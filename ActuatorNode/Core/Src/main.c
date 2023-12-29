@@ -76,11 +76,12 @@ motorConfig	motor1;
 encoderMotor encoderInfo = {.encodeCnt = 0, .position = 0, .preEncoderCnt = 0, .prePosition = 0, .speed = 0, .timeIndex = 0, .numRoundPerSec = 0};
 PIDInfor pidInfor = {.kp = KP, .ki = KI, .kd = KD, .error = 0, .prevError = 0, .errorIntergral = 0, .currT = 0, .prevT = 0, .deltaT = 0, .outputPID = 0, .timeCountPID = 0};
 int timeCountTest = 0;
-uint8_t des_speed = CAN_SPEED_MIN;
-uint8_t cur_speed = CAN_SPEED_MIN;
+float des_speed = 40;
+float cur_speed = CAN_SPEED_MIN;
 extern uint8_t CANDataRcvFlag;
 extern uint8_t urgent_mode;
 uint8_t backward = 0;
+uint8_t isPrint = false;
 
 /* USER CODE END PV */
 
@@ -142,6 +143,11 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
+  if (HAL_CAN_Start(&hcan) != HAL_OK)
+  {
+	  Error_Handler();
+  }
+  HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
 
   startEncoder();
   motorInit(&motor1, &htim1, TIM_CHANNEL_1, TIM_CHANNEL_4, L_EN_GPIO_Port, L_EN_Pin, R_EN_GPIO_Port, R_EN_Pin);
@@ -156,101 +162,109 @@ int main(void)
   /* USER CODE BEGIN WHILE */
     while (1)
     {
-//    	if (CANDataRcvFlag == 1)
-//    	{
-    		goForward(&motor1, 32);
-    		HAL_Delay(1000);
-//    	}
-//    	updateEncoder();
-//    	cur_speed = encoderInfo.speed;
-//    	outPID = PID(des_speed, encoderInfo.speed);
-//		if (CANDataRcvFlag == 1)
-//		{
-//			CANTxData.sequence++;
-//			CANTxData.speed = (uint8_t)cur_speed;
-//			timeElapsed = 0;
-//			CANDataRcvFlag = 0;
-//			cur_seq = CANRxBuffer[CAN_DATA_SEQ_IDX] << 8 |
-//						CANRxBuffer[CAN_DATA_SEQ_IDX+1];
-//			des_speed = CANRxBuffer[CAN_SENSOR_DATA_SPEED_IDX];
-//			uint8_t direction = CANRxBuffer[CAN_SENSOR_DATA_DIRECT_IDX];
-//			if (urgent_mode == 1)
-//			{
-//				if (cur_speed > CAN_SPEED_MIN)
-//				{
-//					cur_speed -= 5;
-//					PWM = speedToPWM((float)cur_speed);
-//					if (backward == 1)
-//					{
-//						goForward(&motor1, PWM);
-//					}
-//					else
-//					{
-//						goReverse(&motor1, PWM);
-//					}
-//				}
-//				else
-//				{
-//					urgent_mode = 0;
-//				}
-//				CANTxData.speed = (uint8_t)outPID;
-//			}
-//			else
-//			{
-//				if (cur_seq == last_seq)
-//				{
-//					urgent_mode = 1;
-//				}
-//				else
-//				{
-//					uint8_t angle;
-//					switch (direction)
-//					{
-//						case(CONTROL_DIR_FORWARD):
-//						{
-//							backward = 0;
-//							angle = 45;
-//							break;
-//						}
-//						case(CONTROL_DIR_LEFT):
-//						{
-//							backward = 0;
-//							angle = 0;
-//							break;
-//						}
-//						case(CONTROL_DIR_RIGHT):
-//						{
-//							backward = 0;
-//							angle = 90;
-//							break;
-//						}
-//						default:
-//						{
-//							backward = 1;
-//							angle = 45;
-//							break;
-//						}
-//					}
-//					setAngle(angle);
-//					if (cur_speed > CAN_SPEED_MIN)
-//					{
-//						cur_speed += 5;
-//						PWM = speedToPWM((float)cur_speed);
-//						if (backward == 1)
-//						{
-//							goForward(&motor1, PWM);
-//						}
-//						else
-//						{
-//							goReverse(&motor1, PWM);
-//						}
-//					}
-//					CANTxData.speed = (uint8_t)outPID;
-//				}
-//			}
-//			last_seq = cur_seq;
-//			CANActuatorResponse(&hcan, &CANTxData);
-//		}
+    	updateEncoder();
+    	cur_speed = encoderInfo.speed;
+		if (CANDataRcvFlag == 1)
+		{
+			CANTxData.sequence++;
+			CANTxData.speed = (uint8_t)cur_speed;
+			des_speed = (float)CANRxBuffer[CAN_SENSOR_DATA_SPEED_IDX];
+//			des_speed = -35;
+//			outPID = PID(des_speed, encoderInfo.speed);
+//			PWM = speedToPWM((float)outPID);
+//			goReverse(&motor1, PWM);
+			timeElapsed = 0;
+			CANDataRcvFlag = 0;
+			cur_seq = CANRxBuffer[CAN_DATA_SEQ_IDX] << 8 |
+						CANRxBuffer[CAN_DATA_SEQ_IDX+1];
+			uint8_t direction = CANRxBuffer[CAN_SENSOR_DATA_DIRECT_IDX];
+			if (urgent_mode == 1)
+			{
+				if (des_speed > CAN_SPEED_MIN)
+				{
+					des_speed -= 5;
+					PWM = speedToPWM((float)des_speed);
+					if (backward == 1)
+					{
+						goReverse(&motor1, PWM);
+					}
+					else
+					{
+						goForward(&motor1, PWM);
+					}
+				}
+				else
+				{
+					urgent_mode = 0;
+				}
+				CANTxData.speed = (uint8_t)outPID;
+			}
+			else
+			{
+				if (cur_seq == last_seq)
+				{
+					urgent_mode = 1;
+				}
+				else
+				{
+					des_speed = CANRxBuffer[CAN_SENSOR_DATA_SPEED_IDX];\
+					uint8_t angle;
+					switch (direction)
+					{
+						case(CONTROL_DIR_FORWARD):
+						{
+							backward = 0;
+							angle = 45;
+							break;
+						}
+						case(CONTROL_DIR_LEFT):
+						{
+							backward = 0;
+							angle = 0;
+							break;
+						}
+						case(CONTROL_DIR_RIGHT):
+						{
+							backward = 0;
+							angle = 90;
+							break;
+						}
+						case(CONTROL_DIR_STOP):
+						{
+							backward = 0;
+							des_speed = 0;
+							angle = 45;
+							break;
+						}
+						default:
+						{
+							backward = 1;
+							des_speed = -des_speed;
+							angle = 45;
+							break;
+						}
+					}
+					setAngle(angle);
+					outPID = PID(des_speed, cur_speed);
+					PWM = speedToPWM((float)outPID);
+					if (backward == 1)
+					{
+						goReverse(&motor1, PWM);
+					}
+					else
+					{
+						goForward(&motor1, PWM);
+					}
+					CANTxData.speed = (uint8_t)cur_speed;
+				}
+			}
+			last_seq = cur_seq;
+			CANActuatorResponse(&hcan, &CANTxData);
+//			printf("\ns %.01f", cur_speed);
+//			printf("\no %.01f", outPID);
+//			printf("\nr %.01f", des_speed);
+//			HAL_Delay(100);
+		}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

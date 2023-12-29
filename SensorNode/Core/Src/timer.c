@@ -1,6 +1,6 @@
 #include "timer.h"
 
-volatile uint32_t timeElapsed;
+//volatile uint32_t timeElapsed = 0;
 extern TIM_HandleTypeDef htim3;
 //extern uint8_t isButtonPressed;
 extern uint32_t pressTime;
@@ -13,7 +13,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
 	if (htim->Instance == htim3.Instance)
 	{
-		timeElapsed += 100;
+//		timeElapsed += 100;
 //		if (isButtonPressed) pressTime += 100;
 //		isPrint = true;
 	}

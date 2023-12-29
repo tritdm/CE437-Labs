@@ -15,7 +15,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	{
 		timeElapsed += 100;
 		if (isButtonPressed) pressTime += 100;
-//		isPrint = true;
+		isPrint = true;
 	}
 	else
 	{
