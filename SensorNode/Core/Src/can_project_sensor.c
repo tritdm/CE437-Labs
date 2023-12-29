@@ -11,20 +11,19 @@ void CANSensorTransmit(CAN_HandleTypeDef *hcan, CANSensorData* controlData)
 	CAN_TxHeaderTypeDef CANTxHeaderControl;
 	uint32_t CANTxMailboxesControl = CAN_TX_MAILBOX1;
 
-	CANTxHeaderControl.StdId = CAN_PROJECT_ACTUATOR_STDID;
+	CANTxHeaderControl.StdId = CAN_PROJECT_SENSOR_STDID;
 	CANTxHeaderControl.IDE 	 = CAN_ID_STD;
 	CANTxHeaderControl.RTR 	 = CAN_RTR_DATA;
 	CANTxHeaderControl.DLC 	 = CAN_DATA_LENGTH;
 
-	CANTxControl[CAN_DATA_SEQ_IDX] 			= (controlData->sequence >> 8) & 0xff;
-	CANTxControl[CAN_DATA_SEQ_IDX+1] 		= (controlData->sequence) & 0xff;
-	CANTxControl[CAN_SENSOR_DATA_PRI_IDX] 	= controlData->priority;
-	CANTxControl[CAN_SENSOR_DATA_SPEED_IDX]	= controlData->speed;
-	CANTxControl[CAN_SENSOR_DATA_DIRECT_IDX]= controlData->direction;
-//	CANTxControl[4]		= UNUSED_DATA;
-//	CANTxControl[5]		= UNUSED_DATA;
-//	CANTxControl[6]		= UNUSED_DATA;
-//	CANTxControl[7]		= UNUSED_DATA;
+	CANTxControl[0] 			= (controlData->sequence >> 8) & 0xff;
+	CANTxControl[1] 		= (controlData->sequence) & 0xff;
+	CANTxControl[2] 	= controlData->priority;
+	CANTxControl[3]	= controlData->speed;
+	CANTxControl[4]= controlData->direction;
+	CANTxControl[5]		= UNUSED_DATA;
+	CANTxControl[6]		= UNUSED_DATA;
+	CANTxControl[7]		= UNUSED_DATA;
 
 	CAN_Transmit(hcan, &CANTxHeaderControl, CANTxControl, &CANTxMailboxesControl);
 	HAL_GPIO_TogglePin(GPIO_Port, LEDR_Pin);
@@ -32,11 +31,13 @@ void CANSensorTransmit(CAN_HandleTypeDef *hcan, CANSensorData* controlData)
 
 void CANResponseCheck()
 {
-
+//	HAL_GPIO_TogglePin(GPIO_Port, LEDG_Pin);
 }
 
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
+	HAL_GPIO_TogglePin(GPIO_Port, LEDG_Pin);
+	HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
 	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &CANRxHeader, CANRxBuffer) != HAL_OK)
 	{
 		Error_Handler();

@@ -14,7 +14,7 @@ void CANActuatorResponse(CAN_HandleTypeDef *hcan, CANActuatorData* responseData)
 	CAN_TxHeaderTypeDef CANTxHeaderResponse;
 	uint32_t CANTxMailboxesResponse = CAN_TX_MAILBOX1;
 
-	CANTxHeaderResponse.StdId 	= CAN_PROJECT_SENSOR_STDID;
+	CANTxHeaderResponse.StdId 	= CAN_PROJECT_ACTUATOR_STDID;
 	CANTxHeaderResponse.IDE 	= CAN_ID_STD;
 	CANTxHeaderResponse.RTR 	= CAN_RTR_DATA;
 	CANTxHeaderResponse.DLC 	= CAN_DATA_LENGTH;
@@ -30,7 +30,10 @@ void CANActuatorResponse(CAN_HandleTypeDef *hcan, CANActuatorData* responseData)
 //	CANTxResponse[7]		= UNUSED_DATA;
 
 	CAN_Transmit(hcan, &CANTxHeaderResponse, CANTxResponse, &CANTxMailboxesResponse);
+
 	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDB_Pin);
+	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDR_Pin);
+	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDG_Pin);
 }
 
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)

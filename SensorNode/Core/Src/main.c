@@ -127,7 +127,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_Base_Start_IT(&htim3);
+//  HAL_TIM_Base_Start_IT(&htim3);
   if (HAL_CAN_Start(&hcan) != HAL_OK)
   {
 	  Error_Handler();
@@ -198,7 +198,10 @@ int main(void)
 //			  }
 		  }
 	  }
+//	  printf("%d %d %d %d %d", ((CANTxData.sequence >> 8)&0xff), (CANTxData.sequence &0xff),
+//			  CANTxData.priority, CANTxData.speed, CANTxData.direction);
 	  CANSensorTransmit(&hcan, &CANTxData);
+	  HAL_Delay(100);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

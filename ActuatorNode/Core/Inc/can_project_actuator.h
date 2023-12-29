@@ -3,8 +3,8 @@
 
 #include "can_node_1.h"
 
-#define CAN_PROJECT_ACTUATOR_STDID 	0x123
-#define CAN_PROJECT_SENSOR_STDID 	0x321
+#define CAN_PROJECT_ACTUATOR_STDID 	0x712
+#define CAN_PROJECT_SENSOR_STDID 	0x7a2
 
 /* format: 0xXX 0xXX 0xXX 0xXX 0xXX 0xXX 0xXX 0xXX
  * 		   SEQ		 PRI  SPD  DIR*/

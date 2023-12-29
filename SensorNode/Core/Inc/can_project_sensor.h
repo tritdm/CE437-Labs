@@ -3,8 +3,8 @@
 
 #include "can_node_2.h"
 
-#define CAN_PROJECT_ACTUATOR_STDID 	0x123
-#define CAN_PROJECT_SENSOR_STDID 	0x321
+#define CAN_PROJECT_ACTUATOR_STDID 	0x712
+#define CAN_PROJECT_SENSOR_STDID 	0x7a2
 
 /* format: 0xXX 0xXX 0xXX 0xXX 0xXX 0xXX 0xXX 0xXX
  * 		   SEQ		 PRI  SPD  DIR */
@@ -19,6 +19,7 @@
 #define CAN_DIRECTION_FULL_LEFT		0x00
 #define CAN_DIRECTION_FORWARD		0x2d
 #define CAN_DIRECTION_FULL_RIGHT	0x5a
+#define UNUSED_DATA					0x55
 
 typedef enum
 {

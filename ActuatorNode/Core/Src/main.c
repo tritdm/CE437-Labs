@@ -160,8 +160,10 @@ int main(void)
     	updateEncoder();
     	cur_speed = encoderInfo.speed;
     	outPID = PID(des_speed, encoderInfo.speed);
-		if (CANDataRcvFlag == 1 || timeElapsed >= 100)
+		if (CANDataRcvFlag == 1)
 		{
+			CANTxData.sequence++;
+			CANTxData.speed = (uint8_t)cur_speed;
 			timeElapsed = 0;
 			CANDataRcvFlag = 0;
 			cur_seq = CANRxBuffer[CAN_DATA_SEQ_IDX] << 8 |
@@ -179,9 +181,7 @@ int main(void)
 				{
 					urgent_mode = 0;
 				}
-				CANTxData.sequence++;
 				CANTxData.speed = (uint8_t)outPID;
-				CANActuatorResponse(&hcan, &CANTxData);
 			}
 			else
 			{
@@ -196,15 +196,14 @@ int main(void)
 					if (outPID < CAN_SPEED_NORMAL)
 					{
 						outPID += 5;
-						PWM = speedToPWM(outPID);
+						PWM = speedToPWM((float)outPID);
 						goForward(&motor1, PWM);
 					}
-					CANTxData.sequence++;
 					CANTxData.speed = (uint8_t)outPID;
-					CANActuatorResponse(&hcan, &CANTxData);
 				}
 			}
 			last_seq = cur_seq;
+			CANActuatorResponse(&hcan, &CANTxData);
 		}
     /* USER CODE END WHILE */
 
