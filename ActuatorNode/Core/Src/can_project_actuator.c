@@ -31,13 +31,13 @@ void CANActuatorResponse(CAN_HandleTypeDef *hcan, CANActuatorData* responseData)
 
 	CAN_Transmit(hcan, &CANTxHeaderResponse, CANTxResponse, &CANTxMailboxesResponse);
 
-	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDB_Pin);
-	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDR_Pin);
-	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDG_Pin);
 }
 
 void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 {
+	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDB_Pin);
+	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDR_Pin);
+	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDG_Pin);
 	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &CANRxHeader, CANRxBuffer) != HAL_OK)
 	{
 		Error_Handler();

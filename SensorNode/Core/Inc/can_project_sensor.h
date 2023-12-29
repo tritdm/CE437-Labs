@@ -7,7 +7,7 @@
 #define CAN_PROJECT_SENSOR_STDID 	0x7a2
 
 /* format: 0xXX 0xXX 0xXX 0xXX 0xXX 0xXX 0xXX 0xXX
- * 		   SEQ		 PRI  SPD  DIR */
+ * 		   SEQ		 PRI  SPD  DIR 	DIR2 */
 #define CAN_DATA_SEQ_IDX			0x00
 #define CAN_SENSOR_DATA_PRI_IDX		0x02
 #define CAN_SENSOR_DATA_SPEED_IDX	0x03
@@ -16,10 +16,11 @@
 #define CAN_SPEED_MIN 				0x00
 #define CAN_SPEED_NORMAL			0x28
 #define CAN_SPEED_MAX 				0x3c
-#define CAN_DIRECTION_FULL_LEFT		0x00
-#define CAN_DIRECTION_FORWARD		0x2d
-#define CAN_DIRECTION_FULL_RIGHT	0x5a
 #define UNUSED_DATA					0x55
+
+/* format: 0xXX 0xXX 0xXX 0xXX 0xXX 0xXX 0xXX 0xXX
+ * 		   SEQ		 SPD */
+#define CAN_ACTUATOR_DATA_SPEED_IDX	0x02
 
 typedef enum
 {
@@ -28,12 +29,20 @@ typedef enum
 	CONTROL_PRIOR_NORMAL = 2
 } CONTROL_PRIORITY;
 
+typedef enum
+{
+	CONTROL_DIR_FORWARD,
+	CONTROL_DIR_LEFT,
+	CONTROL_DIR_RIGHT,
+	CONTROL_DIR_BACKWARD,
+} CONTROL_DIRECTION;
+
 typedef struct
 {
 	uint16_t sequence;
 	CONTROL_PRIORITY priority;
 	uint8_t speed;
-	uint8_t direction;
+	CONTROL_DIRECTION direction;
 } CANSensorData;
 
 void CANSensorTransmit(CAN_HandleTypeDef *hcan, CANSensorData* controlData);

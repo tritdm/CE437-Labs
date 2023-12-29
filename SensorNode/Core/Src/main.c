@@ -65,13 +65,15 @@ extern uint8_t CANRxBuffer[];
 extern uint8_t CANDiagnosticResponseRcvFlag;
 extern CAN_RxHeaderTypeDef CANRxHeader;
 CANSensorData CANTxData = {.sequence = 0, .priority = CONTROL_PRIOR_NORMAL,
-							.speed = CAN_SPEED_MIN, .direction = CAN_DIRECTION_FORWARD};
+							.speed = CAN_SPEED_MIN, .direction = CONTROL_DIR_FORWARD};
 uint8_t last_seq = 0, cur_seq;
 uint16_t left_dis = 0, right_dis = 0;
-const uint16_t threshold = 8000;
+const uint16_t forward_threshold = 8000;
+const uint16_t turn_threshold = 100;
 extern uint8_t CANDataRcvFlag;
 extern uint32_t timeElapsed;
-uint8_t dif = 5, dif2 = 5;
+uint8_t dif = 5;
+uint8_t cur_speed = CAN_SPEED_MIN;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -141,15 +143,16 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  CANTxData.sequence++;
 	  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
 	  CANTxData.speed 		= CAN_SPEED_MIN;
-	  CANTxData.direction 	= CAN_DIRECTION_FORWARD;
+	  CANTxData.direction 	= CONTROL_DIR_FORWARD;
 	  if (CANDataRcvFlag == 1) // timeout
 	  {
 		  CANDataRcvFlag = 0;
 		  cur_seq = CANRxBuffer[CAN_DATA_SEQ_IDX] << 8 |
 				 	 	 CANRxBuffer[CAN_DATA_SEQ_IDX+1];
-		  CANTxData.sequence++;
+		  cur_speed = CANRxBuffer[CAN_ACTUATOR_DATA_SPEED_IDX];
 		  if (cur_seq == last_seq)
 		  {
 			  // do nothing
@@ -163,32 +166,48 @@ int main(void)
 				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
 				  if (CANTxData.speed >= 45 || CANTxData.direction <= 30)
 				  {
-					  dif2 = -dif2;
-				  }
-				  CANTxData.speed 		= CANTxData.speed + dif2;
-				  if (CANTxData.direction >= 90 || CANTxData.direction <= 0)
-				  {
 					  dif = -dif;
 				  }
-				  CANTxData.direction 	= CANTxData.direction + dif;
+				  CANTxData.speed 		= CANTxData.speed + dif;
+				  CANTxData.direction 	= (CANTxData.direction + 1 % 4);
 			  }
-//			  if (left_dis >= threshold && right_dis >= threshold)
+//			  if (left_dis >= forward_threshold && right_dis >= forward_threshold)
 //			  {
 //				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
 //				  CANTxData.speed 		= CAN_SPEED_NORMAL;
 //				  CANTxData.direction 	= CAN_DIRECTION_FORWARD;
 //			  }
-//			  else if (left_dis < threshold && right_dis < threshold)
+//			  else if (left_dis < forward_threshold && right_dis < forward_threshold)
 //			  {
-//				  CANTxData.priority 	= CONTROL_PRIOR_URGENT;
-//				  CANTxData.speed 		= CAN_SPEED_MIN;
-//				  CANTxData.direction 	= CAN_DIRECTION_FORWARD;
+//			  	  if (left_dis < turn_threshold || right_dis < turn_threshold)
+//			  	  {
+//			  		CANTxData.priority 		= CONTROL_PRIOR_NORMAL;
+//				  	CANTxData.speed 		= CAN_SPEED_NORMAL;
+//				  	CANTxData.direction 	= CONTROL_DIR_BACKWARD;
+//			  	  }
+//			  	  else
+//			  	  {
+	 //			  	  if (cur_speed > CAN_SPEED_MIN)
+	//			  	  {
+	//				  	CANTxData.priority 		= CONTROL_PRIOR_URGENT;
+	//				  	CANTxData.speed 		= CAN_SPEED_MIN;
+	//				  	CANTxData.direction 	= CONTROL_DIR_FORWARD;
+	//			  	  }
+	//			  	  else
+	//			  	  {
+	//				  	CANTxData.priority 		= CONTROL_PRIOR_NORMAL;
+	//				  	CANTxData.speed 		= CAN_SPEED_NORMAL;
+	//				  	CANTxData.direction 	= CONTROL_DIR_LEFT;
+	//
+	//			  	  }
+//			  	  }
+
 //			  }
 //			  else if (left_dis > right_dis)
 //			  {
 //				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
 //				  CANTxData.speed 		= CAN_SPEED_NORMAL;
-//				  CANTxData.direction 	= CAN_DIRECTION_FULL_RIGHT;
+//				  CANTxData.direction 	= CONTROL_DIR_RIGHT;
 //			  }
 //			  else if (left_dis < right_dis)
 //			  {
@@ -198,8 +217,6 @@ int main(void)
 //			  }
 		  }
 	  }
-//	  printf("%d %d %d %d %d", ((CANTxData.sequence >> 8)&0xff), (CANTxData.sequence &0xff),
-//			  CANTxData.priority, CANTxData.speed, CANTxData.direction);
 	  CANSensorTransmit(&hcan, &CANTxData);
 	  HAL_Delay(100);
     /* USER CODE END WHILE */

@@ -16,11 +16,11 @@ void CANSensorTransmit(CAN_HandleTypeDef *hcan, CANSensorData* controlData)
 	CANTxHeaderControl.RTR 	 = CAN_RTR_DATA;
 	CANTxHeaderControl.DLC 	 = CAN_DATA_LENGTH;
 
-	CANTxControl[0] 			= (controlData->sequence >> 8) & 0xff;
-	CANTxControl[1] 		= (controlData->sequence) & 0xff;
+	CANTxControl[0] 	= (controlData->sequence >> 8) & 0xff;
+	CANTxControl[1] 	= (controlData->sequence) & 0xff;
 	CANTxControl[2] 	= controlData->priority;
-	CANTxControl[3]	= controlData->speed;
-	CANTxControl[4]= controlData->direction;
+	CANTxControl[3]		= controlData->speed;
+	CANTxControl[4]		= controlData->direction;
 	CANTxControl[5]		= UNUSED_DATA;
 	CANTxControl[6]		= UNUSED_DATA;
 	CANTxControl[7]		= UNUSED_DATA;
