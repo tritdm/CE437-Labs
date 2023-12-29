@@ -26,6 +26,9 @@
 #include "timer.h"
 #include "uart.h"
 #include "can_project_actuator.h"
+#include "motor.h"
+#include "servo.h"
+#include "pid.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -50,6 +53,7 @@ I2C_HandleTypeDef hi2c2;
 
 SPI_HandleTypeDef hspi1;
 
+TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
@@ -65,9 +69,18 @@ uint32_t CANTxMailboxes = CAN_TX_MAILBOX1;
 extern uint8_t CANRxBuffer[];
 extern uint8_t CANDiagnosticRequestRcvFlag;
 extern CAN_RxHeaderTypeDef CANRxHeader;
-CANActuatorData CANTxData;
+CANActuatorData CANTxData = {.sequence = 0, .speed = CAN_SPEED_MIN};
 uint8_t last_seq = 0, cur_seq;
-volatile uint32_t timeElapsed;
+extern uint32_t timeElapsed;
+motorConfig	motor1;
+encoderMotor encoderInfo = {.encodeCnt = 0, .position = 0, .preEncoderCnt = 0, .prePosition = 0, .speed = 0, .timeIndex = 0, .numRoundPerSec = 0};
+PIDInfor pidInfor = {.kp = KP, .ki = KI, .kd = KD, .error = 0, .prevError = 0, .errorIntergral = 0, .currT = 0, .prevT = 0, .deltaT = 0, .outputPID = 0, .timeCountPID = 0};
+int timeCountTest = 0;
+uint8_t des_speed = CAN_SPEED_MIN;
+uint8_t cur_speed = CAN_SPEED_MIN;
+extern uint8_t CANDataRcvFlag;
+extern uint8_t urgent_mode;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -80,6 +93,7 @@ static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_CAN_Init(void);
+static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -124,15 +138,19 @@ int main(void)
   MX_TIM4_Init();
   MX_USART1_UART_Init();
   MX_CAN_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_Base_Start_IT(&htim3);
-  if (HAL_CAN_Start(&hcan) != HAL_OK)
-  {
-	  Error_Handler();
-  }
-  HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
-  printf("Actuator\n");
-  //  Monitor_Show();
+
+  startEncoder();
+  motorInit(&motor1, &htim1, TIM_CHANNEL_1, TIM_CHANNEL_4, L_EN_GPIO_Port, L_EN_Pin, R_EN_GPIO_Port, R_EN_Pin);
+  startMotor(&motor1);
+  initServo();
+//  printf("Actuator\n");
+  int refSpeed = 30;
+  int refSpeedChangeMode = 0;
+  uint8_t PWM = 0;
+  float outPID = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -140,19 +158,21 @@ int main(void)
     while (1)
     {
     	updateEncoder();
-		outPID = PID(refvelo, encoderInfo.speed);
+    	cur_speed = encoderInfo.speed;
+    	outPID = PID(des_speed, encoderInfo.speed);
 		if (CANDataRcvFlag == 1 || timeElapsed >= 100)
 		{
 			timeElapsed = 0;
 			CANDataRcvFlag = 0;
 			cur_seq = CANRxBuffer[CAN_DATA_SEQ_IDX] << 8 |
 						CANRxBuffer[CAN_DATA_SEQ_IDX+1];
+			des_speed = CANRxBuffer[CAN_SENSOR_DATA_SPEED_IDX];
 			if (urgent_mode == 1)
 			{
-				if (outPID > CAN_SPEED_MIN)
+				if (cur_speed > CAN_SPEED_MIN)
 				{
-					outPID -= 5;
-					PWM = velocityToPWM(outPID);
+					cur_speed -= 5;
+					PWM = speedToPWM((float)cur_speed);
 					goForward(&motor1, PWM);
 				}
 				else
@@ -176,7 +196,7 @@ int main(void)
 					if (outPID < CAN_SPEED_NORMAL)
 					{
 						outPID += 5;
-						PWM = velocityToPWM(outPID);
+						PWM = speedToPWM(outPID);
 						goForward(&motor1, PWM);
 					}
 					CANTxData.sequence++;
@@ -355,6 +375,75 @@ static void MX_SPI1_Init(void)
 }
 
 /**
+  * @brief TIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM1_Init(void)
+{
+
+  /* USER CODE BEGIN TIM1_Init 0 */
+
+  /* USER CODE END TIM1_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+  TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
+
+  /* USER CODE BEGIN TIM1_Init 1 */
+
+  /* USER CODE END TIM1_Init 1 */
+  htim1.Instance = TIM1;
+  htim1.Init.Prescaler = 15;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 99;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.RepetitionCounter = 0;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_PWM_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
+  sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
+  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_ConfigChannel(&htim1, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
+  sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
+  sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
+  sBreakDeadTimeConfig.DeadTime = 0;
+  sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
+  sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
+  sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
+  if (HAL_TIMEx_ConfigBreakDeadTime(&htim1, &sBreakDeadTimeConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM1_Init 2 */
+
+  /* USER CODE END TIM1_Init 2 */
+  HAL_TIM_MspPostInit(&htim1);
+
+}
+
+/**
   * @brief TIM2 Initialization Function
   * @param None
   * @retval None
@@ -467,9 +556,9 @@ static void MX_TIM4_Init(void)
 
   /* USER CODE END TIM4_Init 1 */
   htim4.Instance = TIM4;
-  htim4.Init.Prescaler = 0;
+  htim4.Init.Prescaler = 719;
   htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim4.Init.Period = 65535;
+  htim4.Init.Period = 1999;
   htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
@@ -542,12 +631,16 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, SPI_SS_Pin|L_PWM_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(SPI_SS_GPIO_Port, SPI_SS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, R_EN_Pin|L_EN_Pin, GPIO_PIN_RESET);
@@ -555,12 +648,19 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LEDR_Pin|LEDG_Pin|LEDB_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pins : SPI_SS_Pin L_PWM_Pin */
-  GPIO_InitStruct.Pin = SPI_SS_Pin|L_PWM_Pin;
+  /*Configure GPIO pin : PC13 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : SPI_SS_Pin */
+  GPIO_InitStruct.Pin = SPI_SS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(SPI_SS_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : BTN1_Pin BTN2_Pin */
   GPIO_InitStruct.Pin = BTN1_Pin|BTN2_Pin;

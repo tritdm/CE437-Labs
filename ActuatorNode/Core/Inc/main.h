@@ -34,6 +34,7 @@ extern "C" {
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -73,6 +74,8 @@ void Error_Handler(void);
 #define L_EN_GPIO_Port GPIOB
 #define L_PWM_Pin GPIO_PIN_8
 #define L_PWM_GPIO_Port GPIOA
+#define R_PWM_Pin GPIO_PIN_11
+#define R_PWM_GPIO_Port GPIOA
 #define LEDR_Pin GPIO_PIN_3
 #define LEDR_GPIO_Port GPIOB
 #define LEDG_Pin GPIO_PIN_4
@@ -81,7 +84,10 @@ void Error_Handler(void);
 #define LEDB_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-
+#define KP 2.2
+#define KI 0.18
+#define KD 0.03
+#define ACTUATOR_GPIO_PORT GPIOB
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

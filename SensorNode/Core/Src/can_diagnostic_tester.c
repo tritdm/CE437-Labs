@@ -213,15 +213,15 @@ void securityRemainKeySend(CAN_HandleTypeDef *hcan)
 
 }
 
-void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
-{
-	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &CANRxHeader, CANRxBuffer) != HAL_OK)
-	{
-		Error_Handler();
-	}
-
-	if (CANRxHeader.StdId == CAN_DIAGNOSTIC_RESPONSE_ID)
-	{
-		CANDiagnosticResponseRcvFlag = 1;
-	}
-}
+//void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
+//{
+//	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &CANRxHeader, CANRxBuffer) != HAL_OK)
+//	{
+//		Error_Handler();
+//	}
+//
+//	if (CANRxHeader.StdId == CAN_DIAGNOSTIC_RESPONSE_ID)
+//	{
+//		CANDiagnosticResponseRcvFlag = 1;
+//	}
+//}

@@ -292,15 +292,15 @@ uint8_t CANNegativeResponse(CAN_HandleTypeDef *hcan, uint8_t CANSID, uint8_t CAN
 	CAN_Transmit(hcan, &CANTxHeaderResponse, CANTxResponse, &CANTxMailboxesResponse);
 }
 
-void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
-{
-	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &CANRxHeader, CANRxBuffer) != HAL_OK)
-	{
-		Error_Handler();
-	}
-
-	if (CANRxHeader.StdId == CAN_DIAGNOSTIC_REQUEST_ID)
-	{
-		CANDiagnosticRequestRcvFlag = 1;
-	}
-}
+//void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
+//{
+//	if (HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO1, &CANRxHeader, CANRxBuffer) != HAL_OK)
+//	{
+//		Error_Handler();
+//	}
+//
+//	if (CANRxHeader.StdId == CAN_DIAGNOSTIC_REQUEST_ID)
+//	{
+//		CANDiagnosticRequestRcvFlag = 1;
+//	}
+//}

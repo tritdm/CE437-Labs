@@ -33,8 +33,8 @@ typedef enum
 
 typedef struct
 {
-	uint16_t sequence = 0;
-	uint8_t speed = 0;
+	uint16_t sequence;
+	uint8_t speed;
 } CANActuatorData;
 
 #endif /* __CAN_PROJECT_H__ */

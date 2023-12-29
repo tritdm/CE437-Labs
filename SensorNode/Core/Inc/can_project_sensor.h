@@ -29,10 +29,10 @@ typedef enum
 
 typedef struct
 {
-	uint16_t 			sequence 	= 1;
-	CONTROL_PRIORITY 	priority 	= 2;
-	uint8_t 			speed 		= CAN_SPEED_NORMAL;
-	uint8_t 			direction 	= CAN_DIRECTION_FORWARD;
+	uint16_t sequence;
+	CONTROL_PRIORITY priority;
+	uint8_t speed;
+	uint8_t direction;
 } CANSensorData;
 
 #endif /* __CAN_PROJECT_H__ */

@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "uart.h"
 #include "can_project_sensor.h"
+#include "VL53L0X.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -63,10 +64,12 @@ uint32_t CANTxMailboxes = CAN_TX_MAILBOX0;
 extern uint8_t CANRxBuffer[];
 extern uint8_t CANDiagnosticResponseRcvFlag;
 extern CAN_RxHeaderTypeDef CANRxHeader;
-CANSensorData CANTxData;
+CANSensorData CANTxData = {.sequence = 0, .priority = CONTROL_PRIOR_NORMAL,
+							.speed = CAN_SPEED_NORMAL, .direction = CAN_DIRECTION_FORWARD};
 uint8_t last_seq = 0, cur_seq;
 uint16_t left_dis = 0, right_dis = 0;
 const uint16_t threshold = 8192;
+extern uint8_t CANDataRcvFlag;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -125,17 +128,6 @@ int main(void)
 	  Error_Handler();
   }
   HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
-#ifdef VL53L0X
-      bool success = vl53l0x_init();
-      uint16_t ranges[3] = { 0 };
-      while (success)
-      {
-          success = vl53l0x_read_range_single(VL53L0X_IDX_FIRST, &ranges[0]);
-#ifdef VL53L0X_SECOND
-          success &= vl53l0x_read_range_single(VL53L0X_IDX_SECOND, &ranges[1]);
-#endif /* VL53L0X_SECOND */
-      }
-#endif /* VL53L0X */
 
   printf("Sensor\n");
   /* USER CODE END 2 */
@@ -144,7 +136,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  // doc range
 	  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
 	  CANTxData.speed 		= CAN_SPEED_MIN;
 	  CANTxData.direction 	= CAN_DIRECTION_FORWARD;
@@ -527,6 +518,8 @@ void Error_Handler(void)
   __disable_irq();
   while (1)
   {
+	  HAL_GPIO_TogglePin(LEDG_GPIO_Port, LEDG_Pin);
+	  HAL_Delay(200);
   }
   /* USER CODE END Error_Handler_Debug */
 }

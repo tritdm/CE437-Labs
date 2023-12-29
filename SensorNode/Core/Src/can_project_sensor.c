@@ -2,13 +2,14 @@
 
 extern uint8_t CANRxBuffer[];
 extern CAN_RxHeaderTypeDef CANRxHeader;
+volatile uint8_t CANDataRcvFlag;
 
 
 void CANSensorTransmit(CAN_HandleTypeDef *hcan, CANSensorData* controlData)
 {
 	uint8_t CANTxControl[CAN_DATA_LENGTH];
 	CAN_TxHeaderTypeDef CANTxHeaderControl;
-	uint32_t CANTxMailboxesRequest = CAN_TX_MAILBOX1;
+	uint32_t CANTxMailboxesControl = CAN_TX_MAILBOX1;
 
 	CANTxHeaderControl.StdId = CAN_PROJECT_ACTUATOR_STDID;
 	CANTxHeaderControl.IDE 	 = CAN_ID_STD;
@@ -25,7 +26,7 @@ void CANSensorTransmit(CAN_HandleTypeDef *hcan, CANSensorData* controlData)
 //	CANTxControl[6]		= UNUSED_DATA;
 //	CANTxControl[7]		= UNUSED_DATA;
 
-	CAN_Transmit(hcan, &CANTxHeaderRequest, CANTxRequest, &CANTxMailboxesRequest);
+	CAN_Transmit(hcan, &CANTxHeaderControl, CANTxControl, &CANTxMailboxesControl);
 	HAL_GPIO_TogglePin(GPIO_Port, LEDR_Pin);
 }
 

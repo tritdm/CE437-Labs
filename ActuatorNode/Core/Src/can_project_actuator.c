@@ -2,17 +2,17 @@
 
 extern uint8_t CANRxBuffer[];
 extern CAN_RxHeaderTypeDef CANRxHeader;
-uint8_t last_seq = 0;
+volatile uint8_t CANDataRcvFlag;
 extern float outPID;
 extern uint8_t PWM;
 uint8_t urgent_mode = 0;
-volatile uint32_t timeElapsed;
+extern uint32_t timeElapsed;
 
 void CANActuatorResponse(CAN_HandleTypeDef *hcan, CANActuatorData* responseData)
 {
 	uint8_t CANTxResponse[CAN_DATA_LENGTH];
 	CAN_TxHeaderTypeDef CANTxHeaderResponse;
-	uint32_t CANTxMailboxesRequest = CAN_TX_MAILBOX1;
+	uint32_t CANTxMailboxesResponse = CAN_TX_MAILBOX1;
 
 	CANTxHeaderResponse.StdId 	= CAN_PROJECT_SENSOR_STDID;
 	CANTxHeaderResponse.IDE 	= CAN_ID_STD;
@@ -29,7 +29,7 @@ void CANActuatorResponse(CAN_HandleTypeDef *hcan, CANActuatorData* responseData)
 //	CANTxResponse[6]		= UNUSED_DATA;
 //	CANTxResponse[7]		= UNUSED_DATA;
 
-	CAN_Transmit(hcan, &CANTxHeaderRequest, CANTxRequest, &CANTxMailboxesRequest);
+	CAN_Transmit(hcan, &CANTxHeaderResponse, CANTxResponse, &CANTxMailboxesResponse);
 	HAL_GPIO_TogglePin(ACTUATOR_GPIO_PORT, LEDB_Pin);
 }
 
