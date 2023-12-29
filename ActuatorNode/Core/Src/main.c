@@ -155,16 +155,28 @@ int main(void)
     /* USER CODE BEGIN 3 */
     	if(timeCountTest < 3000)
     	{
-    		setAngle(10);
+    		setAngle(0);
+    		HAL_GPIO_TogglePin(LEDR_GPIO_Port, LEDR_Pin);
+    		HAL_GPIO_TogglePin(LEDB_GPIO_Port, LEDB_Pin);
+    		HAL_GPIO_TogglePin(LEDG_GPIO_Port, LEDB_Pin);
     	}
     	else if (timeCountTest >= 3000 && timeCountTest < 6000)
     	{
-    		setAngle(80);
+    		setAngle(90);
+    		HAL_GPIO_TogglePin(LEDR_GPIO_Port, LEDR_Pin);
+    		HAL_GPIO_TogglePin(LEDB_GPIO_Port, LEDB_Pin);
+    		HAL_GPIO_TogglePin(LEDG_GPIO_Port, LEDB_Pin);
     	}
-
+    	else if (timeCountTest >= 6000 && timeCountTest < 10000)
+    	{
+    		HAL_GPIO_TogglePin(LEDR_GPIO_Port, LEDR_Pin);
+    		HAL_GPIO_TogglePin(LEDB_GPIO_Port, LEDB_Pin);
+    		HAL_GPIO_TogglePin(LEDG_GPIO_Port, LEDB_Pin);
+    		setAngle(45);
+    	}
     	else if(timeCountTest >= 10000)
     	{
-    		setAngle(45);
+
     		if(refSpeed >= 60) refSpeedChangeMode = 0;
     		else if (refSpeed <= 30) refSpeedChangeMode = 1;
 
