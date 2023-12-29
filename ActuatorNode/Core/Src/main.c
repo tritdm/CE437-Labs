@@ -25,7 +25,7 @@
 #include "gpio.h"
 #include "timer.h"
 #include "uart.h"
-#include "can_diagnostic_ecu.h"
+#include "can_project_actuator.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -65,6 +65,9 @@ uint32_t CANTxMailboxes = CAN_TX_MAILBOX1;
 extern uint8_t CANRxBuffer[];
 extern uint8_t CANDiagnosticRequestRcvFlag;
 extern CAN_RxHeaderTypeDef CANRxHeader;
+CANActuatorData CANTxData;
+uint8_t last_seq = 0, cur_seq;
+volatile uint32_t timeElapsed;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -83,27 +86,7 @@ static void MX_CAN_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-//void CANResponse()
-//{
-//	for (int _byte = 0; _byte < 8; ++ _byte)
-//	{
-//		CANTxBuffer[_byte] = CANRxBuffer[_byte];
-//	}
-//
-//	CANTxBuffer[2] = CANTxBuffer[0] + CANTxBuffer[1];
-//
-////	CANTxBuffer[7] = SAE_J1850_Calc(CANTxBuffer, 7);
-//
-//	CANTxHeader.StdId 	= CAN_TX_STD_ID;
-//	CANTxHeader.IDE 	= CAN_ID_STD;
-//	CANTxHeader.RTR 	= CAN_RTR_DATA;
-//	CANTxHeader.DLC 	= CAN_DATA_LENGTH;
-//
-//	if (HAL_CAN_AddTxMessage(&hcan, &CANTxHeader, CANTxBuffer, &CANTxMailboxes) == HAL_OK)
-//	{
-//
-//	}
-//}
+
 /* USER CODE END 0 */
 
 /**
@@ -156,27 +139,53 @@ int main(void)
   /* USER CODE BEGIN WHILE */
     while (1)
     {
-    	while (CANDiagnosticRequestRcvFlag != 1);
-    	{
-    		CANDiagnosticRequestRcvFlag = 0;
-//    		readDataByIdentifierResponse(&hcan, &CANRxHeader, CANRxBuffer);
-//    		writeDataByIdentifierResponse(&hcan, &CANRxHeader, CANRxBuffer);
-    		if (securityAccessSeedGenerate(&hcan, &CANRxHeader, CANRxBuffer))
-    		{
-    			while (CANDiagnosticRequestRcvFlag != 1);
-    			{
-    	    		CANDiagnosticRequestRcvFlag = 0;
-    				flowControlResponse(&hcan, &CANRxHeader, CANRxBuffer);
-        			while (CANDiagnosticRequestRcvFlag != 1);
+    	updateEncoder();
+		outPID = PID(refvelo, encoderInfo.speed);
+		if (CANDataRcvFlag == 1 || timeElapsed >= 100)
+		{
+			timeElapsed = 0;
+			CANDataRcvFlag = 0;
+			cur_seq = CANRxBuffer[CAN_DATA_SEQ_IDX] << 8 |
+						CANRxBuffer[CAN_DATA_SEQ_IDX+1];
+			if (urgent_mode == 1)
+			{
+				if (outPID > CAN_SPEED_MIN)
+				{
+					outPID -= 5;
+					PWM = velocityToPWM(outPID);
+					goForward(&motor1, PWM);
+				}
+				else
+				{
+					urgent_mode = 0;
+				}
+				CANTxData.sequence++;
+				CANTxData.speed = (uint8_t)outPID;
+				CANActuatorResponse(&hcan, &CANTxData);
+			}
+			else
+			{
+				if (cur_seq == last_seq)
+				{
+					urgent_mode = 1;
+				}
+				else
+				{
+					uint8_t angle = CANRxBuffer[CAN_SENSOR_DATA_DIRECT_IDX];
+					setAngle(angle);
+					if (outPID < CAN_SPEED_NORMAL)
 					{
-        				CANDiagnosticRequestRcvFlag = 0;
-    					securityAccessKeyResponse(&hcan);
+						outPID += 5;
+						PWM = velocityToPWM(outPID);
+						goForward(&motor1, PWM);
 					}
-    			}
-    		}
-    	}
-//    	CANTransmit();
-//    	HAL_Delay(50);
+					CANTxData.sequence++;
+					CANTxData.speed = (uint8_t)outPID;
+					CANActuatorResponse(&hcan, &CANTxData);
+				}
+			}
+			last_seq = cur_seq;
+		}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -260,9 +269,9 @@ static void MX_CAN_Init(void)
   canfilterconfig.FilterActivation = CAN_FILTER_ENABLE;
   canfilterconfig.FilterBank = 12;  // which filter bank to use from the assigned ones
   canfilterconfig.FilterFIFOAssignment = CAN_FILTER_FIFO1;
-  canfilterconfig.FilterIdHigh = CAN_DIAGNOSTIC_REQUEST_ID<<5;
+  canfilterconfig.FilterIdHigh = CAN_PROJECT_SENSOR_STDID<<5;
   canfilterconfig.FilterIdLow = 0;
-  canfilterconfig.FilterMaskIdHigh = CAN_DIAGNOSTIC_REQUEST_ID<<5;
+  canfilterconfig.FilterMaskIdHigh = CAN_PROJECT_SENSOR_STDID<<5;
   canfilterconfig.FilterMaskIdLow = 0x0000;
   canfilterconfig.FilterMode = CAN_FILTERMODE_IDMASK;
   canfilterconfig.FilterScale = CAN_FILTERSCALE_32BIT;

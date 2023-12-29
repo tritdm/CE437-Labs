@@ -1,6 +1,6 @@
 #include "timer.h"
 
-volatile uint32_t timeElapsed = 0;
+volatile uint32_t timeElapsed;
 extern TIM_HandleTypeDef htim3;
 extern uint8_t isButtonPressed;
 extern uint32_t pressTime;

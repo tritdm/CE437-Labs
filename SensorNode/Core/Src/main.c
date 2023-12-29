@@ -23,7 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "uart.h"
-#include "can_diagnostic_tester.h"
+#include "can_project_sensor.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -38,7 +38,8 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define VL53L0X
+//#define VL6180X_SECOND
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -62,6 +63,10 @@ uint32_t CANTxMailboxes = CAN_TX_MAILBOX0;
 extern uint8_t CANRxBuffer[];
 extern uint8_t CANDiagnosticResponseRcvFlag;
 extern CAN_RxHeaderTypeDef CANRxHeader;
+CANSensorData CANTxData;
+uint8_t last_seq = 0, cur_seq;
+uint16_t left_dis = 0, right_dis = 0;
+const uint16_t threshold = 8192;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -78,20 +83,7 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-//void CANTransmit()
-//{
-//	CANTxHeader.StdId 	= CAN_TX_STD_ID;
-//	CANTxHeader.IDE 	= CAN_ID_STD;
-//	CANTxHeader.RTR 	= CAN_RTR_DATA;
-//	CANTxHeader.DLC 	= CAN_DATA_LENGTH;
-//
-//	CANTxBuffer[7] 		= (CANTxBuffer[7] + 1)%255;
-//
-//	if (HAL_CAN_AddTxMessage(&hcan, &CANTxHeader, CANTxBuffer, &CANTxMailboxes) == HAL_OK)
-//	{
-//		HAL_GPIO_TogglePin(GPIO_Port, LEDR_Pin);
-//	}
-//}
+
 /* USER CODE END 0 */
 
 /**
@@ -133,6 +125,18 @@ int main(void)
 	  Error_Handler();
   }
   HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
+#ifdef VL53L0X
+      bool success = vl53l0x_init();
+      uint16_t ranges[3] = { 0 };
+      while (success)
+      {
+          success = vl53l0x_read_range_single(VL53L0X_IDX_FIRST, &ranges[0]);
+#ifdef VL53L0X_SECOND
+          success &= vl53l0x_read_range_single(VL53L0X_IDX_SECOND, &ranges[1]);
+#endif /* VL53L0X_SECOND */
+      }
+#endif /* VL53L0X */
+
   printf("Sensor\n");
   /* USER CODE END 2 */
 
@@ -140,31 +144,50 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	readDataByIdenfierRequest(&hcan);
-//	  writeShortDataByIdentifierRequest(&hcan);
-	  securityAccessSeedRequest(&hcan);
-	while (CANDiagnosticResponseRcvFlag != 1);
-	{
-		CANDiagnosticResponseRcvFlag = 0;
-//		readDataByIdenfierResponseCheck(CANRxBuffer);
-//		writeDataByIdenfierResponseCheck(CANRxBuffer);
-		if (securityAccessSeedResponseCheck(CANRxBuffer))
-		{
-			securityAccessUnlockRequest(&hcan);
-			HAL_Delay(100);
-			while (CANDiagnosticResponseRcvFlag != 1);
-			{
-				CANDiagnosticResponseRcvFlag = 0;
-				if (flowControlCheck(CANRxBuffer))
-				{
-					HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
-					securityRemainKeySend(&hcan);
-					while (CANDiagnosticResponseRcvFlag != 1);
-					CANDiagnosticResponseRcvFlag = 0;
-				}
-			}
-		}
-	}
+	  // doc range
+	  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
+	  CANTxData.speed 		= CAN_SPEED_MIN;
+	  CANTxData.direction 	= CAN_DIRECTION_FORWARD;
+	  if (CANDataRcvFlag == 1) // timeout
+	  {
+		  CANDataRcvFlag = 0;
+		  cur_seq = CANRxBuffer[CAN_DATA_SEQ_IDX] << 8 |
+				 	 	 CANRxBuffer[CAN_DATA_SEQ_IDX+1];
+		  CANTxData.sequence++;
+		  if (cur_seq == last_seq)
+		  {
+			  // do nothing
+		  }
+		  else
+		  {
+			  CANResponseCheck();
+			  if (left_dis == threshold && right_dis == threshold)
+			  {
+				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
+				  CANTxData.speed 		= CAN_SPEED_NORMAL;
+				  CANTxData.direction 	= CAN_DIRECTION_FORWARD;
+			  }
+			  else if (left_dis < threshold && right_dis <= threshold)
+			  {
+				  CANTxData.priority 	= CONTROL_PRIOR_URGENT;
+				  CANTxData.speed 		= CAN_SPEED_MIN;
+				  CANTxData.direction 	= CAN_DIRECTION_FORWARD;
+			  }
+			  else if (left_dis > right_dis)
+			  {
+				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
+				  CANTxData.speed 		= CAN_SPEED_NORMAL;
+				  CANTxData.direction 	= CAN_DIRECTION_FULL_RIGHT;
+			  }
+			  else if (left_dis < right_dis)
+			  {
+				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
+				  CANTxData.speed 		= CAN_SPEED_NORMAL;
+				  CANTxData.direction 	= CAN_DIRECTION_FULL_LEFT;
+			  }
+		  }
+	  }
+	  CANSensorTransmit(&hcan, &CANTxData);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -302,9 +325,9 @@ static void MX_CAN_Init(void)
   canfilterconfig.FilterActivation = CAN_FILTER_ENABLE;
   canfilterconfig.FilterBank = 12;  // which filter bank to use from the assigned ones
   canfilterconfig.FilterFIFOAssignment = CAN_FILTER_FIFO1;
-  canfilterconfig.FilterIdHigh = CAN_DIAGNOSTIC_RESPONSE_ID<<5;
+  canfilterconfig.FilterIdHigh = CAN_PROJECT_ACTUATOR_STDID<<5;
   canfilterconfig.FilterIdLow = 0;
-  canfilterconfig.FilterMaskIdHigh = CAN_DIAGNOSTIC_RESPONSE_ID<<5;
+  canfilterconfig.FilterMaskIdHigh = CAN_PROJECT_ACTUATOR_STDID<<5;
   canfilterconfig.FilterMaskIdLow = 0x0000;
   canfilterconfig.FilterMode = CAN_FILTERMODE_IDMASK;
   canfilterconfig.FilterScale = CAN_FILTERSCALE_32BIT;
