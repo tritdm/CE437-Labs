@@ -221,7 +221,7 @@ void securityRemainKeySend(CAN_HandleTypeDef *hcan)
 
 	CAN_Transmit(hcan, &CANTxHeaderRequest, CANTxRequest, &CANTxMailboxesRequest);
 
-	HAL_Delay(100);
+	HAL_Delay(2000);
 
 	CANTxRequest[0] 	= 0x22;
 	CANTxRequest[1] 	= key[11];
