@@ -217,13 +217,13 @@ int main(void)
 							angle = 60;
 							break;
 						}
-						case(CONTROL_DIR_LEFT):
+						case(CONTROL_DIR_RIGHT):
 						{
 							backward = 0;
 							angle = 90;
 							break;
 						}
-						case(CONTROL_DIR_RIGHT):
+						case(CONTROL_DIR_LEFT):
 						{
 							backward = 0;
 							angle = 15;
