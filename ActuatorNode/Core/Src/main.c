@@ -236,6 +236,13 @@ int main(void)
 							angle = 60;
 							break;
 						}
+						case(CONTROL_DIR_BACKWARD):
+						{
+							backward = 1;
+							des_speed = -des_speed;
+							angle = 15;
+							break;
+						}
 						default:
 						{
 							backward = 1;

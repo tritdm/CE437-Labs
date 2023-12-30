@@ -23,6 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "uart.h"
 #include "can_project_sensor.h"
+#include "VL53L0X.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -69,12 +70,18 @@ CANSensorData CANTxData = {.sequence = 0, .priority = CONTROL_PRIOR_NORMAL,
 uint8_t last_seq = 0, cur_seq;
 uint16_t left_dis = 0, right_dis = 0;
 const uint16_t forward_threshold = 8000;
-const uint16_t turn_threshold = 100;
+const uint16_t turn_threshold = 200;
+const uint16_t diff_LeftRight = 100;
 extern uint8_t CANDataRcvFlag;
 extern uint32_t timeElapsed;
 uint8_t dif = 5;
 uint8_t cur_speed = CAN_SPEED_MIN;
 uint8_t step = 0;
+
+VL53L0X_t lox1;
+VL53L0X_t lox2;
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -101,49 +108,62 @@ static void MX_TIM3_Init(void);
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
+	/* USER CODE BEGIN 1 */
 
-  /* USER CODE END 1 */
+	/* USER CODE END 1 */
 
-  /* MCU Configuration--------------------------------------------------------*/
+	/* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	HAL_Init();
 
-  /* USER CODE BEGIN Init */
+	/* USER CODE BEGIN Init */
 
-  /* USER CODE END Init */
+	/* USER CODE END Init */
 
-  /* Configure the system clock */
-  SystemClock_Config();
+	/* Configure the system clock */
+	SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
+	/* USER CODE BEGIN SysInit */
 
-  /* USER CODE END SysInit */
+	/* USER CODE END SysInit */
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_ADC1_Init();
-  MX_CAN_Init();
-  MX_I2C1_Init();
-  MX_USART1_UART_Init();
-  MX_USART2_UART_Init();
-  MX_TIM3_Init();
-  /* USER CODE BEGIN 2 */
-  HAL_TIM_Base_Start_IT(&htim3);
-  if (HAL_CAN_Start(&hcan) != HAL_OK)
-  {
+	/* Initialize all configured peripherals */
+	MX_GPIO_Init();
+	MX_ADC1_Init();
+	MX_CAN_Init();
+	MX_I2C1_Init();
+	MX_USART1_UART_Init();
+	MX_USART2_UART_Init();
+	MX_TIM3_Init();
+	/* USER CODE BEGIN 2 */
+	HAL_TIM_Base_Start_IT(&htim3);
+	if (HAL_CAN_Start(&hcan) != HAL_OK)
+	{
 	  Error_Handler();
-  }
-  HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
+	}
+	HAL_CAN_ActivateNotification(&hcan, CAN_IT_RX_FIFO1_MSG_PENDING);
 
-  printf("Sensor\n");
-  /* USER CODE END 2 */
+	printf("Sensor\n");
+	// Sensor
+	resetSensor(&lox1, &lox2);
 
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
+	changeAddressSensor1(&lox1, &hi2c1);
+
+	changeAddressSensor2(&lox2, &hi2c1);
+
+	turnOnSensor();
+	//End sensor
+
+	/* USER CODE END 2 */
+
+	/* Infinite loop */
+	/* USER CODE BEGIN WHILE */
   while (1)
   {
+	  left_dis  = readRangeSingleMillimeters(&lox2);
+	  right_dis = readRangeSingleMillimeters(&lox1);
+
 	  CANTxData.sequence++;
 	  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
 	  if (CANDataRcvFlag == 1) // timeout
@@ -160,73 +180,51 @@ int main(void)
 		  {
 			HAL_GPIO_TogglePin(GPIO_Port, LEDG_Pin);
 			HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
-//			  CANResponseCheck();
-			  if (timeElapsed >= 5000)
-			  {
-				  timeElapsed = 0;
-				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
-//				  if (CANTxData.speed >= 50 || CANTxData.speed <= 30)
-//				  {
-//					  dif = -dif;
-//				  }
-				  CANTxData.speed 		= CANTxData.speed + dif;
-				  CANTxData.direction 	= ((CANTxData.direction + 1) % 5);
-			  }
+			  CANResponseCheck();
+//			  if (timeElapsed >= 5000)
+//			  {
+//				  timeElapsed = 0;
+//				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
+////				  if (CANTxData.speed >= 50 || CANTxData.speed <= 30)
+////				  {
+////					  dif = -dif;
+////				  }
+//				  CANTxData.speed 		= CANTxData.speed + dif;
+//				  CANTxData.direction 	= ((CANTxData.direction + 1) % 5);
+//			  }
 //			if (timeElapsed >= 5000)
 //			{
 //				step = (step + 1)%5;
 //			}
-////			  if (left_dis >= forward_threshold && right_dis >= forward_threshold)
-//			if (step == 0)
-//			{
-//				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
-//				  CANTxData.speed 		= CAN_SPEED_NORMAL;
-//				  CANTxData.direction 	= CONTROL_DIR_FORWARD;
-//			  }
-////			  else if (left_dis < forward_threshold && right_dis < forward_threshold)
-//			else if (step == 3 || step ==4)
-//			{
-////			  	  if (left_dis < turn_threshold || right_dis < turn_threshold)
-//			  	if (step == 3)
-//				{
-//			  		CANTxData.priority 		= CONTROL_PRIOR_NORMAL;
-//				  	CANTxData.speed 		= CAN_SPEED_NORMAL;
-//				  	CANTxData.direction 	= CONTROL_DIR_STOP;
-//			  	  }
-////			  	  else
-//			  	else
-//			  	  {
-//	 			  	  if (cur_speed > 10)
-//				  	  {
-//					  	CANTxData.priority 		= CONTROL_PRIOR_NORMAL;
-//					  	CANTxData.speed 		= CAN_SPEED_MIN;
-//					  	CANTxData.direction 	= CONTROL_DIR_FORWARD;
-//				  	  }
-//				  	  else
-//				  	  {
-//					  	CANTxData.priority 		= CONTROL_PRIOR_NORMAL;
-//					  	CANTxData.speed 		= CAN_SPEED_NORMAL;
-//					  	CANTxData.direction 	= CONTROL_DIR_LEFT;
-//				  	  }
-//			  	  }
-//
-//			  }
-//			else if (step == 1)
-////			  else if (left_dis > right_dis)
-//			  {
-//				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
-//				  CANTxData.speed 		= CAN_SPEED_NORMAL;
-//				  CANTxData.direction 	= CONTROL_DIR_RIGHT;
-//			  }
-//			else if (step == 2)
-////			  else if (left_dis < right_dis)
-//			  {
-//				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
-//				  CANTxData.speed 		= CAN_SPEED_NORMAL;
-//				  CANTxData.direction 	= CONTROL_DIR_LEFT;
-//			  }
+			  if (left_dis >= forward_threshold && right_dis >= forward_threshold) // go Straight
+			{
+				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
+				  CANTxData.speed 		= CAN_SPEED_NORMAL;
+				  CANTxData.direction 	= CONTROL_DIR_FORWARD;
+			  }
+			  else if ((left_dis - right_dis) > diff_LeftRight)
+			  {
+				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
+				  CANTxData.speed 		= CAN_SPEED_NORMAL;
+				  CANTxData.direction 	= CONTROL_DIR_LEFT;
+			  }
+			  else if ((right_dis - left_dis) > diff_LeftRight)
+			  {
+				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
+				  CANTxData.speed 		= CAN_SPEED_NORMAL;
+				  CANTxData.direction 	= CONTROL_DIR_RIGHT;
+			  }
+			  else if (left_dis < turn_threshold && right_dis < turn_threshold)
+			  {
+				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
+				  CANTxData.speed 		= CAN_SPEED_NORMAL;
+				  CANTxData.direction 	= CONTROL_DIR_BACKWARD;
+			  }
+
+
 		  }
 	  }
+	  printf("A %d", CANTxData.direction);
 	  CANSensorTransmit(&hcan, &CANTxData);
 	  HAL_Delay(100);
     /* USER CODE END WHILE */
@@ -542,29 +540,30 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(XSHUT_MCU1_0_GPIO_Port, XSHUT_MCU1_0_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, LedOnBoard_Pin|XSHUT_MCU1_0_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LEDB_Pin|LEDG_Pin|LEDR_Pin|GPIO_PIN_3, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, LEDB_Pin|LEDG_Pin|LEDR_Pin|GPIO_PIN_3
+                          |XSHUT_MCU1_1_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, MPU_BOOT_Pin|MPU_RST_Pin|XSHUT_MCU1_1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, MPU_BOOT_Pin|MPU_RST_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SPI_CS_GPIO_Port, SPI_CS_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : LedOnBoard_Pin XSHUT_MCU1_0_Pin */
+  GPIO_InitStruct.Pin = LedOnBoard_Pin|XSHUT_MCU1_0_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : GPIO1_MCU1_0_Pin */
   GPIO_InitStruct.Pin = GPIO1_MCU1_0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIO1_MCU1_0_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : XSHUT_MCU1_0_Pin */
-  GPIO_InitStruct.Pin = XSHUT_MCU1_0_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(XSHUT_MCU1_0_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : BTN2_Pin BTN1_Pin */
   GPIO_InitStruct.Pin = BTN2_Pin|BTN1_Pin;
