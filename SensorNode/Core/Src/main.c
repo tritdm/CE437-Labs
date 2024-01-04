@@ -81,7 +81,7 @@ uint8_t step = 0;
 VL53L0X_t lox1;
 VL53L0X_t lox2;
 
-
+int timeCountTest = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -224,9 +224,13 @@ int main(void)
 
 		  }
 	  }
-	  printf("A %d", CANTxData.direction);
+	  if(timeCountTest > 200)
+	  {
+//		  printf("\nl %d",left_dis);
+//		  printf("\nr %d",right_dis);
+//		  printf("\nd %d",CANTxData.direction);
+	  }
 	  CANSensorTransmit(&hcan, &CANTxData);
-	  HAL_Delay(100);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

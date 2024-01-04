@@ -76,7 +76,8 @@ motorConfig	motor1;
 encoderMotor encoderInfo = {.encodeCnt = 0, .position = 0, .preEncoderCnt = 0, .prePosition = 0, .speed = 0, .timeIndex = 0, .numRoundPerSec = 0};
 PIDInfor pidInfor = {.kp = KP, .ki = KI, .kd = KD, .error = 0, .prevError = 0, .errorIntergral = 0, .currT = 0, .prevT = 0, .deltaT = 0, .outputPID = 0, .timeCountPID = 0};
 int timeCountTest = 0;
-float des_speed = 40;
+int timeCountTest2 = 0;
+float des_speed = 10;    // xe bự 40
 float cur_speed = CAN_SPEED_MIN;
 extern uint8_t CANDataRcvFlag;
 extern uint8_t urgent_mode;
@@ -156,6 +157,7 @@ int main(void)
   printf("Actuator\n");
   uint8_t PWM = 0;
   float outPID = 0;
+  uint8_t angle;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -169,9 +171,9 @@ int main(void)
 			CANTxData.sequence++;
 			CANTxData.speed = (uint8_t)cur_speed;
 			des_speed = (float)CANRxBuffer[CAN_SENSOR_DATA_SPEED_IDX];
-//			des_speed = -35;
-//			outPID = PID(des_speed, encoderInfo.speed);
-//			PWM = speedToPWM((float)outPID);
+//			des_speed = 13;
+//			outPID = PID(des_speed, cur_speed);
+//			PWM = speedToPWM((float)(outPID < 0) ? -outPID : outPID);
 //			goReverse(&motor1, PWM);
 			timeElapsed = 0;
 			CANDataRcvFlag = 0;
@@ -208,39 +210,39 @@ int main(void)
 				else
 				{
 					des_speed = CANRxBuffer[CAN_SENSOR_DATA_SPEED_IDX];\
-					uint8_t angle;
+//					uint8_t angle;
 					switch (direction)
 					{
 						case(CONTROL_DIR_FORWARD):
 						{
 							backward = 0;
-							angle = 60;
+							angle = 50; //60
 							break;
 						}
 						case(CONTROL_DIR_RIGHT):
 						{
 							backward = 0;
-							angle = 90;
+							angle = 10; //15
 							break;
 						}
 						case(CONTROL_DIR_LEFT):
 						{
 							backward = 0;
-							angle = 15;
+							angle = 80; //90
 							break;
 						}
 						case(CONTROL_DIR_STOP):
 						{
 							backward = 0;
 							des_speed = 0;
-							angle = 60;
+							angle = 60; //60
 							break;
 						}
 						case(CONTROL_DIR_BACKWARD):
 						{
 							backward = 1;
 							des_speed = -des_speed;
-							angle = 15;
+							angle = 10; //15
 							break;
 						}
 						default:
@@ -252,8 +254,9 @@ int main(void)
 						}
 					}
 					setAngle(angle);
-					outPID = PID(des_speed, cur_speed);
-					PWM = speedToPWM((float)outPID);
+//					outPID = PID(des_speed, cur_speed);
+//					PWM = speedToPWM((float)(outPID < 0) ? -outPID : outPID);
+					PWM = speedToPWM((float)des_speed);
 					if (backward == 1)
 					{
 						goReverse(&motor1, PWM);
@@ -267,9 +270,20 @@ int main(void)
 			}
 			last_seq = cur_seq;
 			CANActuatorResponse(&hcan, &CANTxData);
-//			printf("\ns %.01f", cur_speed);
-//			printf("\no %.01f", outPID);
-//			printf("\nr %.01f", des_speed);
+//			if(timeCountTest2 > 5000)
+//			{
+//				des_speed++;
+//				if(des_speed >14) des_speed = 9;
+//				timeCountTest2 = 0;
+//			}
+			if(timeCountTest > 200)
+			{
+				printf("\nd %.01f", des_speed);
+				printf("\ns %.01f", cur_speed);
+				printf("\no %.01f", outPID);
+				timeCountTest = 0;
+			}
+
 //			HAL_Delay(100);
 		}
     /* USER CODE END WHILE */

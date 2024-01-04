@@ -3,9 +3,23 @@
 
 #include "main.h"
 
+
+// xe bự xe nhỏ khác thông số
+//#define XeBu
+
+#ifdef XeBu
+
 #define encoderResolution 580.0f // số xung thay đổi khi xoay 1 vòng
+#define diameter 13.5f // đường kính bánh xe (cm
+
+#else
+
+#define encoderResolution 1990.0f // số xung thay đổi khi xoay 1 vòng
+#define diameter 7.5f // đường kính bánh xe (cm)
+
+#endif
+
 #define PI 3.14159265359f
-#define diameter 13.5f // đường kính bánh xe (cm)
 #define CIRCUMFERENCE_OF_WHEEL (PI * (diameter)) //chu vi
 
 typedef struct{

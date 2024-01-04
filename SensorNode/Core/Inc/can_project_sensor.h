@@ -14,7 +14,7 @@
 #define CAN_SENSOR_DATA_DIRECT_IDX	0x04
 
 #define CAN_SPEED_MIN 				0x00
-#define CAN_SPEED_NORMAL			0x28
+#define CAN_SPEED_NORMAL			0x0d //0x28
 #define CAN_SPEED_MAX 				0x3c
 #define UNUSED_DATA					0x55
 

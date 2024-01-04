@@ -9,7 +9,7 @@ void initServo()
 
 uint8_t convertToPWM(uint8_t angle) {
     if (angle <= 90) {
-        return (uint8_t)((angle * (249 - 99)) / 90 + 99); // [0, 90] sang [99, 249]
+        return (uint8_t)((angle * (249 - 49)) / 90 + 49); // [0, 90] sang [99, 249]
     } else {
         return 249;
     }
@@ -17,7 +17,7 @@ uint8_t convertToPWM(uint8_t angle) {
 
 uint8_t convertToAngle(uint8_t pwm) {
     if (pwm >= 99 && pwm <= 249) {
-        return (uint8_t)((90 * (pwm - 99)) / (249 - 99)); // [99, 249] sang [0, 90]
+        return (uint8_t)((90 * (pwm - 49)) / (249 - 49)); // [99, 249] sang [0, 90]
     } else {
         return 0;
     }

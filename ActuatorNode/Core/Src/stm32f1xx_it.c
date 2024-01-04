@@ -45,6 +45,7 @@
 /* USER CODE BEGIN PV */
 //extern int timeCountPID;
 extern int timeCountTest;
+extern int timeCountTest2;
 extern PIDInfor pidInfor;
 /* USER CODE END PV */
 
@@ -196,6 +197,7 @@ void SysTick_Handler(void)
   encoderInfo.timeIndex++;
   pidInfor.timeCountPID++;
   timeCountTest++;
+  timeCountTest2++;
 //  encoderInfo.encodeCnt = (int16_t)__HAL_TIM_GET_COUNTER(&htim2);
 
   /* USER CODE END SysTick_IRQn 1 */

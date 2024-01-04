@@ -33,7 +33,11 @@ void updateEncoder()
 		{
 			encoderInfo.encodeCnt = (int16_t)__HAL_TIM_GET_COUNTER(&htim2);
 			encoderInfo.numRoundPerSec = ((-(encoderInfo.encodeCnt - encoderInfo.preEncoderCnt)*10)/encoderResolution);  // speed in cm/sec
+#ifdef XeBu
 			encoderInfo.speed = (float)encoderInfo.numRoundPerSec * CIRCUMFERENCE_OF_WHEEL;
+#else
+			encoderInfo.speed = (float)encoderInfo.numRoundPerSec * CIRCUMFERENCE_OF_WHEEL / 2.8f;
+#endif
 			encoderInfo.preEncoderCnt = encoderInfo.encodeCnt;
 			encoderInfo.timeIndex = 0;
 		}
@@ -66,7 +70,8 @@ uint8_t scalePWM(uint8_t PWM)
 
 float speedToPWM(float velocity)
 {
-	return (0.0014f * velocity * velocity  + 0.1236f * velocity + 16.496f);
+//	return (0.0014f * velocity * velocity  + 0.1236f * velocity + 16.496f);//xe bự
+	return (0.1871f * velocity * velocity  + 0.451f* velocity + 42.974f);//xe nhỏ
 	// phương trình dựa trên PWM và vận tốc đo được
 	// từ encoder khi xe chịu tải
 }
