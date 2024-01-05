@@ -84,9 +84,9 @@ void Error_Handler(void);
 #define LEDB_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-#define KP 2.2
-#define KI 0.18
-#define KD 0.03
+#define KP 2.0	//2.2
+#define KI 0.05	//0.18
+#define KD 0.01		//0.03
 #define ACTUATOR_GPIO_PORT GPIOB
 /* USER CODE END Private defines */
 

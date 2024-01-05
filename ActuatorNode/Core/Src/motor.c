@@ -36,7 +36,7 @@ void updateEncoder()
 #ifdef XeBu
 			encoderInfo.speed = (float)encoderInfo.numRoundPerSec * CIRCUMFERENCE_OF_WHEEL;
 #else
-			encoderInfo.speed = (float)encoderInfo.numRoundPerSec * CIRCUMFERENCE_OF_WHEEL / 2.8f;
+			encoderInfo.speed = - ((float)encoderInfo.numRoundPerSec * CIRCUMFERENCE_OF_WHEEL / 2.8f);
 #endif
 			encoderInfo.preEncoderCnt = encoderInfo.encodeCnt;
 			encoderInfo.timeIndex = 0;

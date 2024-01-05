@@ -77,7 +77,7 @@ encoderMotor encoderInfo = {.encodeCnt = 0, .position = 0, .preEncoderCnt = 0, .
 PIDInfor pidInfor = {.kp = KP, .ki = KI, .kd = KD, .error = 0, .prevError = 0, .errorIntergral = 0, .currT = 0, .prevT = 0, .deltaT = 0, .outputPID = 0, .timeCountPID = 0};
 int timeCountTest = 0;
 int timeCountTest2 = 0;
-float des_speed = 10;    // xe bự 40
+float des_speed = 13;    // xe bự 40
 float cur_speed = CAN_SPEED_MIN;
 extern uint8_t CANDataRcvFlag;
 extern uint8_t urgent_mode;
@@ -249,14 +249,14 @@ int main(void)
 						{
 							backward = 1;
 							des_speed = -des_speed;
-							angle = 60;
+							angle = 50; //60
 							break;
 						}
 					}
 					setAngle(angle);
-//					outPID = PID(des_speed, cur_speed);
-//					PWM = speedToPWM((float)(outPID < 0) ? -outPID : outPID);
-					PWM = speedToPWM((float)des_speed);
+					outPID = PID(des_speed, cur_speed);
+					PWM = speedToPWM((float)(outPID < 0) ? -outPID : outPID);
+//					PWM = speedToPWM((float)des_speed);
 					if (backward == 1)
 					{
 						goReverse(&motor1, PWM);
