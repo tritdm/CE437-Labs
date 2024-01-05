@@ -1041,62 +1041,62 @@ bool performSingleRefCalibration(uint8_t vhv_init_byte, VL53L0X_t *vl53l0x)
 
   return true;
 }
-void resetSensor(VL53L0X_t *lox1, VL53L0X_t *lox2)
-{
-	lox1->Address = ADDRESS_DEFAULT;
-	lox2->Address = ADDRESS_DEFAULT;
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, 0);
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, 0);
-	HAL_Delay(20);
+// void resetSensor(VL53L0X_t *lox1, VL53L0X_t *lox2)
+// {
+// 	lox1->Address = ADDRESS_DEFAULT;
+// 	lox2->Address = ADDRESS_DEFAULT;
+// 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, 0);
+// 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, 0);
+// 	HAL_Delay(20);
 
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, 1);
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, 1);
-	HAL_Delay(20);
-}
+// 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, 1);
+// 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, 1);
+// 	HAL_Delay(20);
+// }
 
-void changeAddressSensor1(VL53L0X_t *lox1, I2C_HandleTypeDef *i2cx)
-{
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, 0);
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, 1);
-	HAL_Delay(20);
-	while (!initVL53L0X(1, lox1, i2cx))
-	{
-	  HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, 0); // on led
-	  printf("Failed 1!\n");
-	}
-	setAddress(0x50, lox1);
+// void changeAddressSensor1(VL53L0X_t *lox1, I2C_HandleTypeDef *i2cx)
+// {
+// 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, 0);
+// 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, 1);
+// 	HAL_Delay(20);
+// 	while (!initVL53L0X(1, lox1, i2cx))
+// 	{
+// 	  HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, 0); // on led
+// 	  printf("Failed 1!\n");
+// 	}
+// 	setAddress(0x50, lox1);
 
-	while (!initVL53L0X(1, lox1, i2cx))
-	{
-	  HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, 0); // on led
-//	  printf("Failed 2!\n");
-	}
-}
+// 	while (!initVL53L0X(1, lox1, i2cx))
+// 	{
+// 	  HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, 0); // on led
+// //	  printf("Failed 2!\n");
+// 	}
+// }
 
-void changeAddressSensor2(VL53L0X_t *lox2, I2C_HandleTypeDef *i2cx)
-{
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, 1);
-	//  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, 0);
-	HAL_Delay(20);
+// void changeAddressSensor2(VL53L0X_t *lox2, I2C_HandleTypeDef *i2cx)
+// {
+// 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, 1);
+// 	//  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, 0);
+// 	HAL_Delay(20);
 
-	while (!initVL53L0X(1, lox2, i2cx))
-	{
-	  HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, 0); // on led
-//	  printf("Failed 3!\n");
-	}
-	setAddress(0x42, lox2);
+// 	while (!initVL53L0X(1, lox2, i2cx))
+// 	{
+// 	  HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, 0); // on led
+// //	  printf("Failed 3!\n");
+// 	}
+// 	setAddress(0x42, lox2);
 
-	while (!initVL53L0X(1, lox2, i2cx))
-	{
-	  HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, 0); // on led
-//	  printf("Failed 4!\n");
-	}
-}
-void turnOnSensor()
-{
-	// Sensor
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, 1);
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, 1);
-	HAL_Delay(20);
-	HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, 1);
-}
+// 	while (!initVL53L0X(1, lox2, i2cx))
+// 	{
+// 	  HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, 0); // on led
+// //	  printf("Failed 4!\n");
+// 	}
+// }
+// void turnOnSensor()
+// {
+// 	// Sensor
+// 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, 1);
+// 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, 1);
+// 	HAL_Delay(20);
+// 	HAL_GPIO_WritePin(LEDR_GPIO_Port, LEDR_Pin, 1);
+// }
