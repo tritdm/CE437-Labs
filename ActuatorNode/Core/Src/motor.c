@@ -85,13 +85,20 @@ void startMotor(motorConfig* bts7960_config)
 	HAL_TIM_PWM_Start_IT(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_R);
 }
 
-void stopMotor(motorConfig* bts7960_config)
+void endMotor(motorConfig* bts7960_config)
 {
 	bts7960_config->motorStatus.state = STOP;
 	HAL_GPIO_WritePin(bts7960_config->En_L_GPIOx, bts7960_config->En_L_GPIO_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(bts7960_config->En_R_GPIOx, bts7960_config->En_R_GPIO_Pin, GPIO_PIN_RESET);
 	HAL_TIM_PWM_Stop_IT(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_L);
 	HAL_TIM_PWM_Stop_IT(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_R);
+}
+
+void stopMotor(motorConfig* bts7960_config)
+{
+	bts7960_config->motorStatus.state = STOP;
+	__HAL_TIM_SET_COMPARE(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_L, 1);
+	__HAL_TIM_SET_COMPARE(bts7960_config->Timer_Handle, bts7960_config->Timer_Channel_R, 1);
 }
 
 void goForward(motorConfig* bts7960_config, uint8_t PWM )

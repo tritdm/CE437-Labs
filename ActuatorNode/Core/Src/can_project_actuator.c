@@ -5,7 +5,7 @@ extern CAN_RxHeaderTypeDef CANRxHeader;
 volatile uint8_t CANDataRcvFlag;
 extern float outPID;
 extern uint8_t PWM;
-uint8_t urgent_mode = 0;
+volatile uint8_t urgent_mode = 0;
 extern uint32_t timeElapsed;
 
 void CANActuatorResponse(CAN_HandleTypeDef *hcan, CANActuatorData* responseData)
@@ -22,12 +22,12 @@ void CANActuatorResponse(CAN_HandleTypeDef *hcan, CANActuatorData* responseData)
 	CANTxResponse[CAN_DATA_SEQ_IDX] 			= (responseData->sequence >> 8) & 0xff;
 	CANTxResponse[CAN_DATA_SEQ_IDX+1]			= (responseData->sequence) & 0xff;
 	CANTxResponse[CAN_ACTUATOR_DATA_SPEED_IDX] 	= responseData->speed;
-//	CANTxResponse[CAN_SENSOR_DATA_SPEED_IDX]	= controlData->speed;
-//	CANTxResponse[CAN_SENSOR_DATA_DIRECT_IDX]= controlData->direction;
-//	CANTxResponse[4]		= UNUSED_DATA;
-//	CANTxResponse[5]		= UNUSED_DATA;
-//	CANTxResponse[6]		= UNUSED_DATA;
-//	CANTxResponse[7]		= UNUSED_DATA;
+	CANTxResponse[3]		= UNUSED_DATA;
+	CANTxResponse[4]		= UNUSED_DATA;
+	CANTxResponse[4]		= UNUSED_DATA;
+	CANTxResponse[5]		= UNUSED_DATA;
+	CANTxResponse[6]		= UNUSED_DATA;
+	CANTxResponse[7]		= UNUSED_DATA;
 
 	CAN_Transmit(hcan, &CANTxHeaderResponse, CANTxResponse, &CANTxMailboxesResponse);
 

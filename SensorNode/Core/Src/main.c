@@ -66,18 +66,20 @@ uint32_t CANTxMailboxes = CAN_TX_MAILBOX0;
 extern uint8_t CANRxBuffer[];
 extern uint8_t CANDiagnosticResponseRcvFlag;
 extern CAN_RxHeaderTypeDef CANRxHeader;
-CANSensorData CANTxData = {.sequence = 0, .priority = CONTROL_PRIOR_NORMAL, .speed = 40, .direction = CONTROL_DIR_FORWARD};
+CANSensorData CANTxData;
 uint8_t last_seq = 0, cur_seq;
 uint16_t left_dis = 0, right_dis = 0;
-const uint16_t forward_threshold = 8000;
-const uint16_t turn_threshold = 400;
+const uint16_t forward_threshold = 1100;
+const uint16_t turn_threshold = 600;
 const uint16_t diff_LeftRight = 100;
 extern uint8_t CANDataRcvFlag;
 extern uint32_t timeElapsed;
 uint8_t dif = 5;
 uint8_t cur_speed = CAN_SPEED_MIN;
+uint8_t urgent_out = 0;
 uint8_t step = 0;
-
+uint8_t temp = 0;
+CONTROL_DIRECTION_2 direction2;
 VL53L0X_t lox1;
 VL53L0X_t lox2;
 
@@ -148,6 +150,7 @@ int main(void)
   printf("Sensor\n");
   // Sensor
   init2Sensor(&lox1, &lox2, &hi2c1);
+
   // End sensor
 
   /* USER CODE END 2 */
@@ -175,61 +178,74 @@ int main(void)
         HAL_GPIO_TogglePin(GPIO_Port, LEDG_Pin);
         HAL_GPIO_TogglePin(GPIO_Port, LEDB_Pin);
         CANResponseCheck();
-        //			  if (timeElapsed >= 5000)
-        //			  {
-        //				  timeElapsed = 0;
-        //				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
-        ////				  if (CANTxData.speed >= 50 || CANTxData.speed <= 30)
-        ////				  {
-        ////					  dif = -dif;
-        ////				  }
-        //				  CANTxData.speed 		= CANTxData.speed + dif;
-        //				  CANTxData.direction 	= ((CANTxData.direction + 1) % 5);
-        //			  }
-        //			if (timeElapsed >= 5000)
-        //			{
-        //				step = (step + 1)%5;
-        //			}
-
-        if (left_dis >= forward_threshold && right_dis >= forward_threshold) // go Straight
-        {
-          CANTxData.priority = CONTROL_PRIOR_NORMAL;
-          CANTxData.speed = CAN_SPEED_NORMAL;
-          CANTxData.direction = CONTROL_DIR_FORWARD;
-        }
-        else if ((left_dis - right_dis) > diff_LeftRight && right_dis < 300)
-        {
-          CANTxData.priority = CONTROL_PRIOR_NORMAL;
-          CANTxData.speed = CAN_SPEED_NORMAL;
-          CANTxData.direction = CONTROL_DIR_LEFT;
-        }
-        else if ((right_dis - left_dis) > diff_LeftRight && left_dis < 300)
-        {
-          CANTxData.priority = CONTROL_PRIOR_NORMAL;
-          CANTxData.speed = CAN_SPEED_NORMAL;
-          CANTxData.direction = CONTROL_DIR_RIGHT;
-        }
+        if (urgent_out == 1)
+		{
+        	if (left_dis <= forward_threshold || right_dis <= forward_threshold)
+        	{
+        		CANTxData.priority = CONTROL_PRIOR_NORMAL;
+				CANTxData.speed = CAN_SPEED_NORMAL;
+				CANTxData.direction1 = CONTROL_DIR_BACKWARD;
+				CANTxData.direction2 = direction2;
+        	}
+        	else
+        	{
+        		urgent_out = 0;
+        	}
+        	temp = 0;
+		}
         else if (left_dis < turn_threshold && right_dis < turn_threshold)
         {
+        	if (left_dis < right_dis)
+        	{
+        		direction2 = CONTROL_DIR_LEFT;
+        	}
+        	else
+        	{
+        		direction2 = CONTROL_DIR_RIGHT;
+        	}
+        	if (cur_speed > CAN_SPEED_MIN)
+        	{
+				CANTxData.priority = CONTROL_PRIOR_URGENT;
+				CANTxData.speed = CAN_SPEED_NORMAL;
+				CANTxData.direction1 = CONTROL_DIR_BACKWARD;
+        	}
+        	else
+        	{
+        		urgent_out = 1;
+        	}
+        	temp = 1;
+        }
+        else if (left_dis >= forward_threshold && right_dis >= forward_threshold) // go Straight
+        {
           CANTxData.priority = CONTROL_PRIOR_NORMAL;
           CANTxData.speed = CAN_SPEED_NORMAL;
-          CANTxData.direction = CONTROL_DIR_BACKWARD;
+          CANTxData.direction1 = CONTROL_DIR_FORWARD;
+		  CANTxData.direction2 = CONTROL_DIR_STRAIGHT;
+      	temp = 2;
         }
-        //			  else
-        //			  {
-        //				  CANTxData.priority 	= CONTROL_PRIOR_NORMAL;
-        //				  CANTxData.speed 		= CAN_SPEED_NORMAL;
-        //				  CANTxData.direction 	= CONTROL_DIR_FORWARD;
-        //				  temp = 5;
-        //			  }
+        else if (((left_dis - right_dis) > diff_LeftRight) && (right_dis < 900))
+        {
+          CANTxData.priority = CONTROL_PRIOR_NORMAL;
+          CANTxData.speed = CAN_SPEED_NORMAL;
+          CANTxData.direction1 = CONTROL_DIR_FORWARD;
+		  CANTxData.direction2 = CONTROL_DIR_LEFT;
+      	temp = 3;
+        }
+        else if (((right_dis - left_dis) > diff_LeftRight) && (left_dis < 900))
+        {
+          CANTxData.priority = CONTROL_PRIOR_NORMAL;
+          CANTxData.speed = CAN_SPEED_NORMAL;
+          CANTxData.direction1 = CONTROL_DIR_FORWARD;
+          CANTxData.direction2 = CONTROL_DIR_RIGHT;
+      	temp = 4;
+        }
       }
     }
     if (timeCountTest > 200)
     {
-      //		  printf("\nl %d",left_dis);
-      //		  printf("\nr %d",right_dis);
-      //		  printf("\nd %d", abs(right_dis - left_dis));
-      //		  printf("\nkey %d",temp);
+      		  printf("\n\nl %d",left_dis);
+      		  printf("\nr %d",right_dis);
+      		  printf("\nkey %d",temp);
       //		  printf("\nd %d",CANTxData.direction);
     }
     CANSensorTransmit(&hcan, &CANTxData);

@@ -77,6 +77,7 @@ void motorInit (	motorConfig* bts7960_config,
 uint8_t scalePWM(uint8_t PWM); // giới hạn PWM từ 0-100
 float speedToPWM(float velocity);
 void startMotor(motorConfig* bts7960_config);
+void endMotor(motorConfig* bts7960_config);
 void stopMotor(motorConfig* bts7960_config);
 void goForward(motorConfig* bts7960_config, uint8_t PWM);
 void goReverse(motorConfig* bts7960_config, uint8_t PWM);

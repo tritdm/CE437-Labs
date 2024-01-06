@@ -20,8 +20,8 @@ void CANSensorTransmit(CAN_HandleTypeDef *hcan, CANSensorData* controlData)
 	CANTxControl[1] 	= (controlData->sequence) & 0xff;
 	CANTxControl[2] 	= controlData->priority;
 	CANTxControl[3]		= controlData->speed;
-	CANTxControl[4]		= controlData->direction;
-	CANTxControl[5]		= UNUSED_DATA;
+	CANTxControl[4]		= controlData->direction1;
+	CANTxControl[5]		= controlData->direction2;
 	CANTxControl[6]		= UNUSED_DATA;
 	CANTxControl[7]		= UNUSED_DATA;
 
